@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบจัดการออเดอร์ · งานแกะสลักเลเซอร์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<link rel="stylesheet" href="css/base.css?v=21">
+<link rel="stylesheet" href="css/layout.css?v=21">
+<link rel="stylesheet" href="css/components.css?v=21">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-top">
+      <div class="sb-brand">🛡️ I Real Jade<span>ระบบประกัน &amp; ออเดอร์</span></div>
+      <button class="sb-close" id="sbClose">✕</button>
+    </div>
+    <nav id="nav"></nav>
+  </aside>
+  <div class="sb-ov" id="sbOv"></div>
+
+<div class="wrap">
+
+  <header>
+    <div class="greet">
+      <div class="eb" id="pageEb">ระบบจัดการออเดอร์ · งานแกะสลักเลเซอร์</div>
+      <h1 id="pageTitle">ภาพรวมทุกหัวข้อ</h1>
+      <p id="pageSub">เลือกหัวข้อจากเมนูซ้าย หรือกดการ์ดด้านล่าง</p>
+    </div>
+    <div class="hbtns">
+      <button class="iconbtn" id="btnMenu" style="display:none">☰ เมนู</button>
+      <button class="iconbtn primary" id="btnNew">＋ สร้างออเดอร์</button>
+      <button class="iconbtn" id="btnLog">📜 บันทึก</button>
+      <button class="iconbtn" id="btnSettings">⚙️ ตั้งค่า</button>
+    </div>
+  </header>
+
+  <div id="homeView"></div>
+
+  <div id="sectionView">
+  <div id="normalView">
+  <section class="stats" id="stats"></section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>สัดส่วนตามประเภทงาน</h2>
+      <div class="hint">นับจำนวนออเดอร์ในแต่ละประเภทของหัวข้อนี้</div>
+      <div class="donut-box">
+        <div class="donut"><svg width="190" height="190" viewBox="0 0 190 190" id="donut"></svg>
+          <div class="mid"><div class="n num" id="donutN">0</div><div class="l">ออเดอร์</div></div></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>ลำดับความนิยม</h2>
+      <div class="hint">ประเภทที่มีออเดอร์มากที่สุด</div>
+      <div class="rank" id="rank"></div>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <div class="search"><span class="ic">🔍</span><input id="search" placeholder="ค้นหา เลขออเดอร์ / ชื่อลูกค้า"></div>
+    <div class="selwrap"><select id="fCat"></select></div>
+    <div class="selwrap"><select id="fDate"></select></div>
+    <div class="seg"><button data-v="cat" class="on">ตามประเภท</button><button data-v="status">ตามสถานะ</button></div>
+  </div>
+
+  <section id="gallery"></section>
+  </div><!-- /normalView -->
+
+  <div id="elecView"></div><!-- คลังกลุ่มรูป (ประกันอิเล็คทรอนิค) -->
+  </div><!-- /sectionView -->
+
+  <footer>ระบบจัดการออเดอร์งานแกะสลักเลเซอร์ · เก็บข้อมูลบน Supabase</footer>
+</div><!-- /wrap -->
+</div><!-- /shell -->
+
+<!-- โมดัลออเดอร์ -->
+<div class="ov" id="ov"></div>
+<div class="modal" id="modal">
+  <div class="mhead"><h2 id="mTitle">สร้างออเดอร์ใหม่</h2><button class="close" id="mClose">✕</button></div>
+  <div class="form">
+    <div class="frow">
+      <div class="fld"><label>เลขออเดอร์</label><input id="oOrder" placeholder="เช่น A1023"></div>
+      <div class="fld"><label>ชื่อลูกค้า</label><input id="oCust" placeholder="ชื่อ-นามสกุล"></div>
+    </div>
+    <div class="frow">
+      <div class="fld"><label>วันที่</label><input type="date" id="oDate"></div>
+      <div class="fld"><label>ประเภทงาน (ของหัวข้อ)</label><select id="oCat"></select></div>
+    </div>
+    <div class="fld"><label>หัวข้อ (เมนูซ้าย)</label><select id="oSection"></select></div>
+
+    <!-- ฟิลด์บัตรแข็ง (แสดงเฉพาะหัวข้อ ทอง/เงิน) -->
+    <div id="cardFields" style="display:none">
+      <div class="card-box" id="cardBox">
+        <div class="card-box-h" id="cardBoxHead">💳 ข้อมูลประกันบัตรแข็ง</div>
+        <div class="frow">
+          <div class="fld"><label>💰 ราคา/มูลค่าบัตร (บาท)</label><input type="number" id="oPrice" min="0" step="1" placeholder="เช่น 10000"></div>
+          <div class="fld"><label>⏳ ระยะประกัน (ปี)</label><input type="number" id="oTerm" min="1" step="1" placeholder="5"></div>
+        </div>
+        <div class="frow">
+          <div class="fld"><label>📅 วันเริ่มประกัน</label><input type="date" id="oWStart"></div>
+          <div class="fld"><label>💵 มูลค่ารับซื้อคืน</label><input id="oBuyback" readonly placeholder="—"></div>
+        </div>
+        <div class="card-cd" id="oCountdown">⏳ กรอกวันเริ่มประกันเพื่อดูเวลาที่เหลือ</div>
+      </div>
+    </div>
+
+    <div class="fld"><label>สถานะงาน</label><div class="chips" id="oStatus"></div></div>
+    <div class="fld"><label>หมายเหตุ</label><textarea id="oNote" placeholder="รายละเอียดเพิ่มเติม..."></textarea></div>
+    <div class="fld">
+      <label>รูปงาน (สูงสุด 20 รูป)</label>
+      <div class="imgpick" id="imgGrid"></div>
+      <div class="imgcount" id="imgCount">0/20 รูป</div>
+      <input type="file" id="oFiles" accept="image/*" multiple hidden>
+    </div>
+    <div class="mactions">
+      <span class="prog" id="mProg"></span>
+      <button class="btn danger" id="mDelete" style="display:none">ลบออเดอร์</button>
+      <button class="btn ghost" id="mCancel">ยกเลิก</button>
+      <button class="btn primary" id="mSave">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- โมดัลนำเข้ารูปเข้าคลัง (ประกันอิเล็คทรอนิค) -->
+<div class="ov" id="elecOv"></div>
+<div class="modal" id="elecModal">
+  <div class="mhead"><h2 id="elecTitle">📥 นำเข้ารูปเข้าคลัง</h2><button class="close" id="elecClose">✕</button></div>
+  <div class="form">
+    <!-- ขั้นตอน 1: เลือกวันที่ + โฟลเดอร์ -->
+    <div id="elecStep1">
+      <div class="fld"><label>📅 เลือกวันที่ (จะกลายเป็นชื่อกลุ่มอัตโนมัติ)</label><input type="date" id="elecDate"></div>
+      <div class="fld">
+        <label>📁 เลือกโฟลเดอร์ที่มีรูป</label>
+        <div class="elec-drop" id="elecDrop">
+          <div class="elec-drop-ic">🗂️</div>
+          <div class="elec-drop-t">กดเพื่อเลือกทั้งโฟลเดอร์</div>
+          <div class="elec-drop-s">ระบบจะอ่านเฉพาะไฟล์รูปในโฟลเดอร์นั้น</div>
+        </div>
+        <input type="file" id="elecFolder" webkitdirectory directory multiple accept="image/*" hidden>
+      </div>
+      <div id="elecPick" class="elec-pick" style="display:none"></div>
+      <div class="elec-thumbs" id="elecThumbs"></div>
+      <div class="mactions">
+        <span class="prog" id="elecHint"></span>
+        <button class="btn ghost" id="elecCancel1">ยกเลิก</button>
+        <button class="btn primary" id="elecStart" disabled>⬆️ เริ่มอัปโหลด</button>
+      </div>
+    </div>
+    <!-- ขั้นตอน 2: อัปโหลด + ผลลัพธ์ -->
+    <div id="elecStep2" style="display:none">
+      <div class="elec-up-head" id="elecUpHead">กำลังอัปโหลด…</div>
+      <div class="elec-bar"><div class="elec-bar-fill" id="elecBarFill"></div></div>
+      <div class="elec-bar-meta"><span id="elecBarPct" class="num">0%</span><span id="elecBarCnt" class="num">0/0</span></div>
+      <div class="elec-fail" id="elecFail" style="display:none">
+        <div class="elec-fail-h">⚠️ อัปโหลดไม่สำเร็จ <span id="elecFailN" class="num"></span> รูป — ต้องผ่าน 100% ก่อนบันทึกกลุ่ม</div>
+        <div class="elec-fail-list" id="elecFailList"></div>
+      </div>
+      <div class="mactions" id="elecStep2Actions" style="display:none">
+        <button class="btn danger" id="elecAbort">ยกเลิก & ลบที่อัปแล้ว</button>
+        <button class="btn primary" id="elecRetry">🔁 ลองใหม่เฉพาะที่พลาด</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ลิ้นชักตั้งค่า -->
+<div class="drawer" id="drawer">
+  <div class="dhead"><h2>⚙️ ตั้งค่า</h2><button class="close" id="dClose">✕</button></div>
+  <div class="dbody">
+    <div class="dsec">
+      <div class="st">ประเภทงาน (ของหัวข้อที่เปิดอยู่)</div>
+      <div class="zlist" id="catList"></div>
+      <input id="newCat" placeholder="ชื่อประเภทใหม่ เช่น คาถา / ชื่อ-นามสกุล" style="width:100%;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;outline:none">
+      <div class="swatches" id="catSwatches"></div>
+      <button class="addbtn" id="addCat" style="width:100%;margin-top:6px">＋ เพิ่มประเภทงาน</button>
+    </div>
+    <div class="dsec">
+      <div class="st">นำเข้าออเดอร์จำนวนมาก</div>
+      <button class="addbtn" id="btnImportExcel" style="width:100%">📥 นำเข้าจาก Excel / CSV</button>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55">สร้างออเดอร์ทีละหลายรายการจากไฟล์ · คอลัมน์: เลขออเดอร์ · ชื่อลูกค้า · วันที่ · ประเภทงาน · หัวข้อ · สถานะ · หมายเหตุ (รูปใส่เองในเว็บภายหลัง)</div>
+    </div>
+    <div class="dsec">
+      <div class="st">ข้อมูล</div>
+      <div class="dataline">
+        <button class="btn ghost" id="btnExport">⬇️ ส่งออก JSON</button>
+        <button class="btn ghost" id="btnImport">⬆️ นำเข้า JSON</button>
+        <button class="btn ghost" id="btnReset" style="color:#c9695b">🗑️ ล้างข้อมูล</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+    <div class="dsec">
+      <div class="st">ที่เก็บข้อมูล</div>
+      <div class="store-note"><b id="storeStatus">กำลังเชื่อมต่อ…</b><br><br>
+        ซิงก์ขึ้น Supabase ครบทุกส่วน: ออเดอร์ <code>Warranty_orders</code> · ประเภทงาน <code>Warranty_categories</code> · หมวดหมู่พิเศษ <code>Warranty_sections</code> · บันทึกกิจกรรม <code>Warranty_logs</code> · รูป bucket <code>warranty-images</code> — สำรองในเครื่องอัตโนมัติ</div>
+    </div>
+  </div>
+</div>
+
+<!-- ลิ้นชักบันทึกกิจกรรม (Activity Log) -->
+<div class="drawer" id="logDrawer">
+  <div class="dhead"><h2>📜 บันทึกกิจกรรม</h2><button class="close" id="logClose">✕</button></div>
+  <div class="dbody">
+    <div class="dsec">
+      <div class="log-top">
+        <div>
+          <div class="st" style="margin-bottom:5px">ประวัติการทำงาน</div>
+          <div class="log-count" id="logCount">—</div>
+        </div>
+        <button class="btn ghost log-clear" id="logClear">🧹 ล้างประวัติ</button>
+      </div>
+    </div>
+    <div class="dsec">
+      <div class="zlist" id="logList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- โมดัลนำเข้า Excel/CSV -->
+<div class="ov" id="impOv"></div>
+<div class="modal" id="impModal">
+  <div class="mhead"><h2>📥 นำเข้าออเดอร์จาก Excel / CSV</h2><button class="close" id="impClose">✕</button></div>
+  <div class="form">
+    <div id="impStep1">
+      <div class="imp-help">รองรับไฟล์ <b>.xlsx</b> และ <b>.csv</b> · เรียงคอลัมน์ตามนี้ (แถวแรกเป็นหัวตารางได้):</div>
+      <div class="imp-cols">
+        <span><b>A</b> เลขออเดอร์</span><span><b>B</b> ชื่อลูกค้า</span><span><b>C</b> วันที่</span>
+        <span><b>D</b> ประเภทงาน</span><span><b>E</b> หัวข้อ</span><span><b>F</b> สถานะงาน</span><span><b>G</b> หมายเหตุ</span>
+      </div>
+      <div class="imp-note">💡 หัวข้อ/ประเภทงานที่ยังไม่มี ระบบจะสร้างให้อัตโนมัติ · สถานะใส่ได้ทั้ง "รอทำ/กำลังทำ/เสร็จแล้ว/ส่งแล้ว" · วันที่รูปแบบ 2026-07-24</div>
+      <div class="mactions" style="justify-content:space-between">
+        <button class="btn ghost" id="impTemplate">⬇️ ดาวน์โหลดเทมเพลต</button>
+        <button class="btn primary" id="impPick">📂 เลือกไฟล์</button>
+      </div>
+      <input type="file" id="impFile" accept=".xlsx,.xls,.csv" hidden>
+    </div>
+    <div id="impStep2" style="display:none">
+      <div class="imp-summary" id="impSummary"></div>
+      <div class="imp-preview" id="impPreview"></div>
+      <div class="mactions">
+        <button class="btn ghost" id="impBack">↩ เลือกไฟล์ใหม่</button>
+        <button class="btn primary" id="impConfirm">✅ ยืนยันนำเข้า</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="lb" id="lb">
+  <button class="lb-close" id="lbClose" type="button" title="ปิด (Esc)">✕</button>
+  <button class="lb-nav lb-prev" id="lbPrev" type="button" title="รูปก่อนหน้า (←)">‹</button>
+  <img id="lbImg" alt="">
+  <button class="lb-nav lb-next" id="lbNext" type="button" title="รูปถัดไป (→)">›</button>
+  <div class="lb-count num" id="lbCount"></div>
+</div>
+
+<!-- สคริปต์ (เรียงลำดับสำคัญ: config → helpers → store → log → app → orders → settings → main) -->
+<script src="js/config.js?v=21"></script>
+<script src="js/helpers.js?v=21"></script>
+<script src="js/store.js?v=21"></script>
+<script src="js/log.js?v=21"></script>
+<script src="js/app.js?v=21"></script>
+<script src="js/orders.js?v=21"></script>
+<script src="js/elec.js?v=21"></script>
+<script src="js/settings.js?v=21"></script>
+<script src="js/import-excel.js?v=21"></script>
+<script src="js/main.js?v=21"></script>
+</body>
+</html>

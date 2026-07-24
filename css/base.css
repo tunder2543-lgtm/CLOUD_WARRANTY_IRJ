@@ -1,0 +1,38 @@
+/* ============================================================
+   base.css — ตัวแปรธีม, reset, องค์ประกอบพื้นฐาน
+   ============================================================ */
+:root{
+  --bg:#eef2ef; --bg-2:#e6ece8; --surface:#ffffff;
+  --ink:#3b453f; --ink-soft:#5d6862; --muted:#939d97; --line:#e7ede9;
+  --sage:#7cb5a0;
+  --k4-bg:#eaf1f7;
+  --sans:"IBM Plex Sans Thai",sans-serif; --round:"Quicksand",sans-serif;
+  --shadow:0 12px 34px -14px rgba(59,69,63,.22);
+  --shadow-sm:0 6px 18px -10px rgba(59,69,63,.20);
+  --shadow-lg:0 30px 70px -24px rgba(59,69,63,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;
+  background:radial-gradient(900px 500px at 88% -6%,#eaf3ee,transparent 60%),
+    radial-gradient(700px 460px at -4% 4%,#f2efe8,transparent 58%),var(--bg);
+  min-height:100vh;padding:30px 20px 70px}
+.wrap{max-width:1160px;margin:0 auto}
+.num{font-family:var(--round);font-variant-numeric:tabular-nums}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;color:var(--ink)}
+
+/* header */
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+.greet .eb{font-size:13px;color:var(--sage);font-weight:600}
+.greet h1{font-size:clamp(23px,3.4vw,32px);font-weight:600;letter-spacing:-.01em;margin-top:3px}
+.greet p{color:var(--muted);font-size:14px;font-weight:300;margin-top:3px}
+.hbtns{display:flex;gap:10px;align-items:center}
+.iconbtn{background:var(--surface);border:none;border-radius:16px;padding:12px 18px;box-shadow:var(--shadow-sm);
+  display:flex;align-items:center;gap:9px;font-size:14px;font-weight:500;color:var(--ink);transition:.25s}
+.iconbtn:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.iconbtn.primary{background:var(--sage);color:#fff}
+
+footer{text-align:center;color:var(--muted);font-size:12px;margin-top:34px}
+
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
