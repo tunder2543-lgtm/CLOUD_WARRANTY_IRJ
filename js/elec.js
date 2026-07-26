@@ -10,13 +10,14 @@
 /* ===== state ===== */
 let elecGroupId=null;        /* กลุ่มที่กำลังเปิดดู (null = หน้ารายการกลุ่ม) */
 let elecSearch="";           /* คำค้นในหน้ารายละเอียดกลุ่ม */
+let elecYear=null;           /* ปี (ค.ศ.) ที่เลือกดู (null = ยังไม่เลือก → default ปีปัจจุบัน) */
 let elecFiles=[];            /* [{file,name,status:'pending'|'done'|'fail',reason,thumb}] */
 let elecUploadGroupId=null;  /* id ที่ใช้ระหว่างการ import ครั้งนี้ */
 let elecZipBusy=false;
 let elecLB=null;             /* lightbox แกลเลอรี: {list,idx,bucket,gid} */
 
 /* รีเซ็ตการนำทาง (เรียกจาก gotoSection ตอนเปลี่ยนหัวข้อ) */
-function resetElecNav(){ elecGroupId=null; elecSearch=""; }
+function resetElecNav(){ elecGroupId=null; elecSearch=""; elecYear=null; }
 
 /* กำลังอยู่ในขั้นตอนอัปโหลด (step2) — ห้ามปิดโมดัลด้วยการกดพื้นที่นอก/Esc/X
    ต้องรอเสร็จ หรือกดปุ่ม "ยกเลิก & ลบที่อัปแล้ว" เท่านั้น */
@@ -52,10 +53,25 @@ function renderElecList(){
       <div class="elec-empty-h">ยังไม่มีกลุ่มรูปในคลังนี้</div>
       <div class="elec-empty-s">กดปุ่ม “＋ นำเข้ารูปใหม่” มุมบนขวา เพื่อเลือกวันที่และเลือกโฟลเดอร์รูปทั้งหมด</div></div>`;
   }else{
-    /* จัดกลุ่มตามเดือน (คงลำดับเดิม=ใหม่→เก่า) แล้วเรียงคีย์เดือนใหม่→เก่า, ไม่มีวันที่ไว้ล่างสุด */
+    /* ===== แถบเลือกปี (ค.ศ. ใหม่→เก่า, ไม่ระบุปีไว้ท้ายสุด) ===== */
+    const years=[...new Set(groups.map(o=>yearKey(o.date)))]
+      .sort((a,b)=>{ if(a==="")return 1; if(b==="")return -1; return a<b?1:-1; });
+    /* เลือกปี: ค่าที่ผู้ใช้เลือก (ถ้ายังมีข้อมูล) → ปีปัจจุบัน → ปีล่าสุด */
+    const now=new Date(), curYear=String(now.getFullYear());
+    if(!years.includes(elecYear)) elecYear = years.includes(curYear)?curYear:years[0];
+    html+=`<div class="eyear-bar">`+years.map(y=>{
+      const cnt=groups.filter(o=>yearKey(o.date)===y).length;
+      const lbl=(y==="")?"ไม่ระบุปี":String(Number(y)+543);
+      return `<button class="eyear-chip${y===elecYear?" on":""}" data-year="${esc(y)}">${esc(lbl)}<span class="eyc-n num">${cnt}</span></button>`;
+    }).join("")+`</div>`;
+    /* ===== เดือนของปีที่เลือก (ใหม่→เก่า, ไม่มีวันที่ไว้ล่างสุด) ===== */
+    const inYear=groups.filter(o=>yearKey(o.date)===elecYear);
     const byMonth=new Map();
-    groups.forEach(o=>{ const k=monthKey(o.date); if(!byMonth.has(k)) byMonth.set(k,[]); byMonth.get(k).push(o); });
+    inYear.forEach(o=>{ const k=monthKey(o.date); if(!byMonth.has(k)) byMonth.set(k,[]); byMonth.get(k).push(o); });
     const keys=[...byMonth.keys()].sort((a,b)=>{ if(a==="")return 1; if(b==="")return -1; return a<b?1:-1; });
+    /* เดือนที่กางไว้: เดือนปัจจุบัน (ถ้ามีในปีนี้) ไม่งั้นเดือนล่าสุดของปีนี้ */
+    const curMonth=curYear+"-"+String(now.getMonth()+1).padStart(2,"0");
+    const openMonth=keys.includes(curMonth)?curMonth:keys[0];
     html+=keys.map(k=>{
       const items=byMonth.get(k);
       const imgN=items.reduce((n,o)=>n+((o.images&&o.images.length)||0),0);
@@ -74,7 +90,7 @@ function renderElecList(){
           <button class="gdel" data-del="${o.id}" title="ลบกลุ่ม (ใส่รหัส)">🗑</button>
         </div>`;
       }).join("");
-      return `<section class="emonth" data-mk="${esc(k)}">
+      return `<section class="emonth${k===openMonth?"":" collapsed"}" data-mk="${esc(k)}">
         <button class="emonth-head" type="button">
           <span class="emonth-caret">▾</span>
           <span class="emonth-name">📅 ${esc(monthLabel(k))}</span>
@@ -85,6 +101,7 @@ function renderElecList(){
     }).join("");
   }
   wrap.innerHTML=html;
+  wrap.querySelectorAll(".eyear-chip").forEach(c=>c.onclick=()=>{ elecYear=c.dataset.year; renderElecList(); window.scrollTo({top:0,behavior:"smooth"}); });
   wrap.querySelectorAll(".emonth-head").forEach(h=>h.onclick=()=>h.closest(".emonth").classList.toggle("collapsed"));
   wrap.querySelectorAll(".gcard").forEach(el=>el.onclick=e=>{
     if(e.target.closest(".gdel")) return;
