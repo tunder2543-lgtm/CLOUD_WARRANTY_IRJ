@@ -22,6 +22,16 @@ function beDateLabel(iso){
   const be=(Number(m[1])+543)%100;
   return `${m[3]}-${m[2]}-${String(be).padStart(2,"0")}`;
 }
+/* ===== จัดกลุ่มตามเดือน (คลังกลุ่มรูป) ===== */
+const TH_MONTHS=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+/* คีย์เดือนไว้จัดกลุ่ม/เรียง เช่น 2026-07 (คืน "" ถ้าไม่มีวันที่ → ไปกองล่างสุด) */
+function monthKey(iso){ const m=String(iso||"").match(/^(\d{4})-(\d{2})/); return m?`${m[1]}-${m[2]}`:""; }
+/* ป้ายชื่อเดือนไทย + พ.ศ. เช่น 2026-07 -> "กรกฎาคม 2569" */
+function monthLabel(iso){
+  const m=String(iso||"").match(/^(\d{4})-(\d{2})/);
+  if(!m) return "ไม่ระบุวันที่";
+  return `${TH_MONTHS[Number(m[2])-1]||m[2]} ${Number(m[1])+543}`;
+}
 /* ทำชื่อไฟล์ให้ปลอดภัยสำหรับ storage key แต่คงชื่อเดิมไว้อ่าน/ค้นหาได้ */
 function sanitizeImgName(name,i){
   let n=String(name||"").split(/[\\/]/).pop().trim();      /* เอาเฉพาะชื่อไฟล์ ตัด path */

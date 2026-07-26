@@ -52,23 +52,40 @@ function renderElecList(){
       <div class="elec-empty-h">ยังไม่มีกลุ่มรูปในคลังนี้</div>
       <div class="elec-empty-s">กดปุ่ม “＋ นำเข้ารูปใหม่” มุมบนขวา เพื่อเลือกวันที่และเลือกโฟลเดอร์รูปทั้งหมด</div></div>`;
   }else{
-    html+=`<div class="egrid">`+groups.map(o=>{
-      const label=beDateLabel(o.date), cnt=(o.images&&o.images.length)||0;
-      const cover=cnt?bucketImgUrl(ei.bucket,o.id,o.images[0]):null;
-      return `<div class="gcard" data-gid="${o.id}">
-        <div class="gcover">${cover
-          ?`<img loading="lazy" src="${cover}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'gph',textContent:'🖼️'}))">`
-          :`<div class="gph">🗂️</div>`}
-          <span class="gcnt num">🖼️ ${cnt}</span></div>
-        <div class="gbody">
-          <div class="gname num">${esc(label||"(ไม่มีวันที่)")}</div>
-          <div class="gmeta">จำนวนรูป ${cnt}</div>
-        </div>
-        <button class="gdel" data-del="${o.id}" title="ลบกลุ่ม (ใส่รหัส)">🗑</button>
-      </div>`;
-    }).join("")+`</div>`;
+    /* จัดกลุ่มตามเดือน (คงลำดับเดิม=ใหม่→เก่า) แล้วเรียงคีย์เดือนใหม่→เก่า, ไม่มีวันที่ไว้ล่างสุด */
+    const byMonth=new Map();
+    groups.forEach(o=>{ const k=monthKey(o.date); if(!byMonth.has(k)) byMonth.set(k,[]); byMonth.get(k).push(o); });
+    const keys=[...byMonth.keys()].sort((a,b)=>{ if(a==="")return 1; if(b==="")return -1; return a<b?1:-1; });
+    html+=keys.map(k=>{
+      const items=byMonth.get(k);
+      const imgN=items.reduce((n,o)=>n+((o.images&&o.images.length)||0),0);
+      const cards=items.map(o=>{
+        const label=beDateLabel(o.date), cnt=(o.images&&o.images.length)||0;
+        const cover=cnt?bucketImgUrl(ei.bucket,o.id,o.images[0]):null;
+        return `<div class="gcard" data-gid="${o.id}">
+          <div class="gcover">${cover
+            ?`<img loading="lazy" src="${cover}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'gph',textContent:'🖼️'}))">`
+            :`<div class="gph">🗂️</div>`}
+            <span class="gcnt num">🖼️ ${cnt}</span></div>
+          <div class="gbody">
+            <div class="gname num">${esc(label||"(ไม่มีวันที่)")}</div>
+            <div class="gmeta">จำนวนรูป ${cnt}</div>
+          </div>
+          <button class="gdel" data-del="${o.id}" title="ลบกลุ่ม (ใส่รหัส)">🗑</button>
+        </div>`;
+      }).join("");
+      return `<section class="emonth" data-mk="${esc(k)}">
+        <button class="emonth-head" type="button">
+          <span class="emonth-caret">▾</span>
+          <span class="emonth-name">📅 ${esc(monthLabel(k))}</span>
+          <span class="emonth-sub">${items.length} กลุ่ม · ${imgN} รูป</span>
+        </button>
+        <div class="egrid">${cards}</div>
+      </section>`;
+    }).join("");
   }
   wrap.innerHTML=html;
+  wrap.querySelectorAll(".emonth-head").forEach(h=>h.onclick=()=>h.closest(".emonth").classList.toggle("collapsed"));
   wrap.querySelectorAll(".gcard").forEach(el=>el.onclick=e=>{
     if(e.target.closest(".gdel")) return;
     elecGroupId=el.dataset.gid; elecSearch=""; renderElecView(); window.scrollTo({top:0,behavior:"smooth"});

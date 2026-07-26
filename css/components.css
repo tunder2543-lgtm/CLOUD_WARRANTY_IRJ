@@ -145,6 +145,17 @@
   display:grid;place-items:center;opacity:0;transition:.2s}
 .gcard:hover .gdel{opacity:1}
 
+/* หัวข้อเดือน (แบ่งกลุ่มตามเดือน) */
+.emonth{margin-bottom:26px}
+.emonth-head{display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:none;
+  cursor:pointer;padding:6px 2px 12px;text-align:left;border-bottom:1px solid var(--line);margin-bottom:16px}
+.emonth-caret{font-size:13px;color:var(--sage);transition:transform .2s;flex:none}
+.emonth-name{font-size:16px;font-weight:700;color:var(--ink)}
+.emonth-sub{font-size:12.5px;color:var(--muted);margin-left:auto;flex:none}
+.emonth.collapsed .emonth-caret{transform:rotate(-90deg)}
+.emonth.collapsed .egrid{display:none}
+.emonth.collapsed .emonth-head{margin-bottom:0;border-bottom-color:transparent}
+
 /* หน้ารายละเอียดกลุ่ม */
 .elec-detail-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
 .edh-title{flex:1;min-width:140px}
