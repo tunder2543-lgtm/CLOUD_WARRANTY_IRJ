@@ -89,7 +89,7 @@ function renderView(){
   renderCatManager();   /* หมวดในตั้งค่า อิงหัวข้อปัจจุบัน */
   if(home) renderHome();
   else if(elec) renderElecView();
-  else { buildCharts(); renderStats(); fillFilters(); renderGallery(); }
+  else { buildCharts(); renderStats(); fillFilters(); syncSegForSection(); renderGallery(); }
 }
 
 /* ===== สรุปประกันบัตรแข็ง (ทอง/เงิน) ===== */
@@ -274,11 +274,31 @@ function visibleOrders(){
     return true;
   });
 }
+/* เวลาที่เหลือถึงกำหนดรับซื้อคืน (ms) — ไม่มีประกัน/ไม่มีวันเริ่ม = Infinity (ไปกองล่างสุด) */
+function warrantyRemainMs(o){ const end=warrantyEnd(o); return end?(end.getTime()-Date.now()):Infinity; }
+/* แสดง/ซ่อนปุ่ม "ใกล้หมดประกัน" เฉพาะหัวข้อบัตรแข็ง + ซิงก์ปุ่มมุมมองที่ active */
+function syncSegForSection(){
+  const isCard=isCardSection(currentSection), be=$("segExpire");
+  if(be) be.style.display=isCard?"":"none";
+  if(!isCard && view==="expire") view="cat";
+  document.querySelectorAll(".seg button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
+}
 function renderGallery(){
   const g=$("gallery");g.innerHTML="";
   const items=visibleOrders();
   if(!items.length){ g.innerHTML=`<div style="text-align:center;color:var(--muted);padding:54px 20px">
     ${scoped().length?"ไม่พบออเดอร์ที่ตรงกับเงื่อนไข":"ยังไม่มีออเดอร์ในหัวข้อนี้ — กด “＋ สร้างออเดอร์” เพื่อเริ่มต้น"}</div>`; return; }
+  /* มุมมองเรียงตามอายุรับซื้อคืน (ใกล้หมดก่อน → เหลือมากสุด) — รายการเดียวไม่จัดกลุ่ม */
+  if(view==="expire"){
+    const sorted=[...items].sort((a,b)=>warrantyRemainMs(a)-warrantyRemainMs(b));
+    const sec=document.createElement("div");sec.className="grp";
+    sec.innerHTML=`<div class="grphead"><span class="dot" style="--gc:var(--sage)"></span>
+      <span class="t">⏳ อายุรับซื้อคืน — ใกล้หมดก่อน</span><span class="c num">${sorted.length}</span><span class="rule"></span></div>
+      <div class="ocards"></div>`;
+    sorted.forEach(o=>sec.querySelector(".ocards").appendChild(orderCard(o)));
+    g.appendChild(sec);
+    return;
+  }
   const groups=new Map();
   items.forEach(o=>{
     let gk,gn,gc;
