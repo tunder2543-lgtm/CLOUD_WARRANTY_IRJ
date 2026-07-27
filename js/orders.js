@@ -1,5 +1,5 @@
 /* ============================================================
-   orders.js — โมดัลสร้าง/แก้ไขออเดอร์ + แนบรูปสูงสุด 20 รูป
+   orders.js — โมดัลสร้าง/แก้ไขออเดอร์ + แนบรูปสูงสุด MAX_ORDER_IMGS รูป
    ============================================================ */
 let editId=null, mImgs=[], mRemoved=[], tmpStatus=null;
 
@@ -72,16 +72,16 @@ function renderModalImgs(){
     c.querySelector(".x").onclick=()=>removeModalImg(i);
     g.appendChild(c);
   });
-  if(mImgs.length<20){
+  if(mImgs.length<MAX_ORDER_IMGS){
     const a=document.createElement("div");a.className="add";a.textContent="＋";
     a.onclick=()=>$("oFiles").click();
     g.appendChild(a);
   }
-  $("imgCount").textContent=`${mImgs.length}/20 รูป`;
+  $("imgCount").textContent=`${mImgs.length}/${MAX_ORDER_IMGS} รูป`;
 }
 function addModalFiles(files){
   for(const f of files){
-    if(mImgs.length>=20){toast("แนบได้สูงสุด 20 รูป");break;}
+    if(mImgs.length>=MAX_ORDER_IMGS){toast("แนบได้สูงสุด "+MAX_ORDER_IMGS+" รูป");break;}
     mImgs.push({kind:"new",file:f,url:URL.createObjectURL(f)});
   }
   renderModalImgs();
