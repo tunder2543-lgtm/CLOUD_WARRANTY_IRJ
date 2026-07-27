@@ -42,6 +42,9 @@ function wire(){
   $("mSave").onclick=saveOrder; $("mDelete").onclick=deleteOrder;
   $("mCancel").onclick=()=>showModal(false); $("mClose").onclick=()=>showModal(false); $("ov").onclick=()=>{};   /* กดพื้นหลังไม่ปิด — ต้องกด ✕ หรือ ยกเลิก */
   $("oFiles").onchange=e=>{if(e.target.files.length){addModalFiles(e.target.files);e.target.value="";}};
+  /* ตัวเลือกวันที่ (custom): เลือก "วันที่" → ตั้ง "วันเริ่มประกัน" ตามอัตโนมัติ (เฉพาะหัวข้อบัตรแข็ง) */
+  dpInit("oDate",{onChange:iso=>{ if(iso && cardPlan($("oSection").value)) dpSet("oWStart",iso,true); updateBuyback(); }});
+  dpInit("oWStart",{onChange:()=>updateBuyback()});
   /* ลิ้นชักตั้งค่า */
   const dr=$("drawer");
   $("btnSettings").onclick=()=>dr.classList.add("show");

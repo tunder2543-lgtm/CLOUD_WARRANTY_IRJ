@@ -10,9 +10,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<link rel="stylesheet" href="css/base.css?v=22">
-<link rel="stylesheet" href="css/layout.css?v=22">
-<link rel="stylesheet" href="css/components.css?v=22">
+<link rel="stylesheet" href="css/base.css?v=23">
+<link rel="stylesheet" href="css/layout.css?v=23">
+<link rel="stylesheet" href="css/components.css?v=23">
 </head>
 <body>
 <div class="shell">
@@ -91,7 +91,9 @@
       <div class="fld"><label>ชื่อลูกค้า</label><input id="oCust" placeholder="ชื่อ-นามสกุล"></div>
     </div>
     <div class="frow">
-      <div class="fld"><label>วันที่</label><input type="date" id="oDate"></div>
+      <div class="fld"><label>วันที่</label>
+        <input type="text" id="oDate_disp" class="dp-disp" placeholder="วัน/เดือน/ปี" readonly autocomplete="off">
+        <input type="hidden" id="oDate"></div>
       <div class="fld"><label>ประเภทงาน (ของหัวข้อ)</label><select id="oCat"></select></div>
     </div>
     <div class="fld"><label>หัวข้อ (เมนูซ้าย)</label><select id="oSection"></select></div>
@@ -109,7 +111,9 @@
           <div class="fld"><label>⏳ ระยะประกัน (ปี)</label><input type="number" id="oTerm" min="1" step="1" placeholder="5"></div>
         </div>
         <div class="frow">
-          <div class="fld"><label>📅 วันเริ่มประกัน</label><input type="date" id="oWStart"></div>
+          <div class="fld"><label>📅 วันเริ่มประกัน</label>
+            <input type="text" id="oWStart_disp" class="dp-disp" placeholder="วัน/เดือน/ปี" readonly autocomplete="off">
+            <input type="hidden" id="oWStart"></div>
           <div class="fld"><label>💵 มูลค่ารับซื้อคืน</label><input id="oBuyback" readonly placeholder="—"></div>
         </div>
         <div class="card-cd" id="oCountdown">⏳ กรอกวันเริ่มประกันเพื่อดูเวลาที่เหลือ</div>
@@ -266,15 +270,16 @@
 </div>
 
 <!-- สคริปต์ (เรียงลำดับสำคัญ: config → helpers → store → log → app → orders → settings → main) -->
-<script src="js/config.js?v=22"></script>
-<script src="js/helpers.js?v=22"></script>
-<script src="js/store.js?v=22"></script>
-<script src="js/log.js?v=22"></script>
-<script src="js/app.js?v=22"></script>
-<script src="js/orders.js?v=22"></script>
-<script src="js/elec.js?v=22"></script>
-<script src="js/settings.js?v=22"></script>
-<script src="js/import-excel.js?v=22"></script>
-<script src="js/main.js?v=22"></script>
+<script src="js/config.js?v=23"></script>
+<script src="js/helpers.js?v=23"></script>
+<script src="js/datepicker.js?v=23"></script>
+<script src="js/store.js?v=23"></script>
+<script src="js/log.js?v=23"></script>
+<script src="js/app.js?v=23"></script>
+<script src="js/orders.js?v=23"></script>
+<script src="js/elec.js?v=23"></script>
+<script src="js/settings.js?v=23"></script>
+<script src="js/import-excel.js?v=23"></script>
+<script src="js/main.js?v=23"></script>
 </body>
 </html>

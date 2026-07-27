@@ -16,7 +16,7 @@ function openOrder(o){
   $("mDelete").style.display=o?"":"none";
   $("oOrder").value=o?o.order_no:"";
   $("oCust").value=o?o.customer:"";
-  $("oDate").value=o?o.date:"";
+  dpSet("oDate",o?o.date:"",true);
   $("oNote").value=o?o.note:"";
   $("oSection").innerHTML=`<option value="">— ไม่ระบุ —</option>`+sectionOptions();
   $("oSection").value=o?(o.section||""):(currentSection&&currentSection!=="__none"?currentSection:"");
@@ -26,10 +26,10 @@ function openOrder(o){
   $("oCardNo").value=o?(o.cardno||""):"";
   $("oPrice").value=o?(o.price==null?"":o.price):"";
   $("oTerm").value=o?(o.wterm||""):"";
-  $("oWStart").value=o?(o.wstart||""):"";
+  dpSet("oWStart",o?(o.wstart||""):"",true);
   updateCardFields();
   $("oSection").onchange=()=>{fillModalCatSelect($("oSection").value,$("oCat").value);updateCardFields();};
-  $("oPrice").oninput=updateBuyback; $("oWStart").oninput=updateBuyback; $("oTerm").oninput=updateBuyback;
+  $("oPrice").oninput=updateBuyback; $("oTerm").oninput=updateBuyback;   /* วันที่จัดการผ่าน dpInit onChange */
   tmpStatus=o?o.status:"todo";
   const sc=$("oStatus");sc.innerHTML="";
   STATUSES.forEach(s=>{
@@ -52,7 +52,7 @@ function updateCardFields(){
   $("cardBox").style.setProperty("--card-c",plan.color);
   $("cardBox").style.setProperty("--card-tint",plan.tint);
   if(!$("oTerm").value)$("oTerm").value=DEFAULT_TERM_YEARS;
-  if(!$("oWStart").value && $("oDate").value)$("oWStart").value=$("oDate").value;
+  if(!dpGet("oWStart") && dpGet("oDate"))dpSet("oWStart",dpGet("oDate"),true);
   updateBuyback();
 }
 function updateBuyback(){
