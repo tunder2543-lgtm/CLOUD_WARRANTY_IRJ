@@ -35,6 +35,7 @@ const ELEC_SECTIONS={
 const isElecSection=id=>!!ELEC_SECTIONS[id];
 const elecInfo=id=>ELEC_SECTIONS[id]||null;
 const DEL_GROUP_PASSWORD="5044";   /* รหัสยืนยันการลบกลุ่ม */
+const UNLOCK_PASSWORD="5044";      /* รหัสปลดล็อคออเดอร์ (read-only → แก้ไข) */
 
 /* ===== ประกันบัตรแข็ง: อัตรารับซื้อคืน + ระยะเวลา (ต่อหัวข้อ) ===== */
 const CARD_PLANS={

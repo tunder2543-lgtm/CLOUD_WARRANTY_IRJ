@@ -74,6 +74,33 @@
 .dp-m{border:none;background:var(--bg-2);border-radius:10px;padding:10px 4px;font-size:12.5px;color:var(--ink);font-weight:500}
 .dp-m:hover{background:var(--sage);color:#fff}
 .dp-m.sel{background:var(--sage);color:#fff}
+
+/* ===== ย้ายลำดับรูป (image reorder) + ป้ายปก ===== */
+.imgpick .cell.cover{outline:2px solid var(--sage);outline-offset:-2px}
+.imgpick .cell .cover-tag{position:absolute;top:3px;left:3px;background:var(--sage);color:#fff;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;line-height:1.5}
+.imgpick .cell .star{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:rgba(59,69,63,.72);border:none;font-size:10px;line-height:1;display:grid;place-items:center;padding:0}
+.imgpick .cell .star:hover{background:var(--sage)}
+.imgpick .cell .ord{position:absolute;left:0;right:0;bottom:0;display:flex;gap:3px;justify-content:center;padding:3px;background:linear-gradient(transparent,rgba(59,69,63,.5))}
+.imgpick .cell .ord .mv{width:24px;height:20px;border:none;border-radius:6px;background:rgba(255,255,255,.92);color:var(--ink);font-size:10px;display:grid;place-items:center;padding:0}
+.imgpick .cell .ord .mv:disabled{opacity:.3}
+.imgpick .cell .ord .mv:not(:disabled):hover{background:var(--sage);color:#fff}
+
+/* ===== ป้ายล็อคบนการ์ดออเดอร์ ===== */
+.ocard .cover .lockbadge{position:absolute;right:8px;top:8px;background:rgba(59,69,63,.85);color:#fff;font-size:12px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;z-index:2}
+
+/* ===== หน้าดูออเดอร์แบบล็อค (read-only) ===== */
+.lock-note{background:#fff4e0;border:1px solid #f0d9a8;color:#8a6d3b;font-size:12.5px;padding:9px 12px;border-radius:12px;margin-bottom:14px}
+.lv-rows{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:16px}
+.lv-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 14px;background:var(--surface)}
+.lv-row:nth-child(even){background:var(--bg)}
+.lv-l{font-size:13px;color:var(--ink-soft)}
+.lv-v{font-size:14.5px;font-weight:600;color:var(--ink);text-align:right}
+.lv-imgs-h{font-size:13px;color:var(--ink-soft);font-weight:500;margin-bottom:9px}
+.lv-imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+.lv-cell{border-radius:12px;overflow:hidden;aspect-ratio:1;border:1px solid var(--line);background:var(--bg)}
+.lv-cell img{width:100%;height:100%;object-fit:cover;cursor:zoom-in;display:block}
+.lv-cell .iph{width:100%;height:100%;display:grid;place-items:center;color:var(--muted);font-size:20px}
+.lv-noimg{color:var(--muted);font-size:13px;padding:10px 0}
 .card-cd{font-size:13px;color:var(--ink-soft);background:rgba(255,255,255,.75);border-radius:11px;padding:10px 12px;margin-top:4px;text-align:center}
 .card-cd b{font-family:var(--round);color:var(--ink);font-weight:700}
 .mactions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;align-items:center}

@@ -41,6 +41,9 @@ function wire(){
   /* โมดัลออเดอร์ */
   $("mSave").onclick=saveOrder; $("mDelete").onclick=deleteOrder;
   $("mCancel").onclick=()=>showModal(false); $("mClose").onclick=()=>showModal(false); $("ov").onclick=()=>{};   /* กดพื้นหลังไม่ปิด — ต้องกด ✕ หรือ ยกเลิก */
+  $("mLock").onclick=lockCurrentOrder;
+  /* โมดัลดูออเดอร์แบบล็อค (read-only) */
+  $("lockClose").onclick=closeLockView; $("lockCloseBtn").onclick=closeLockView; $("lockOv").onclick=()=>{};
   $("oFiles").onchange=e=>{if(e.target.files.length){addModalFiles(e.target.files);e.target.value="";}};
   /* ตัวเลือกวันที่ (custom): เลือก "วันที่" → ตั้ง "วันเริ่มประกัน" ตามอัตโนมัติ (เฉพาะหัวข้อบัตรแข็ง) */
   dpInit("oDate",{onChange:iso=>{ if(iso && cardPlan($("oSection").value)) dpSet("oWStart",iso,true); updateBuyback(); }});
@@ -93,7 +96,7 @@ function wire(){
     if(e.key==="ArrowLeft"){e.preventDefault();elecLBPrev();}
     else if(e.key==="ArrowRight"){e.preventDefault();elecLBNext();}
   });
-  document.addEventListener("keydown",e=>{if(e.key==="Escape"){showModal(false);closeImportModal();if(typeof showElecModal==="function"&&!(typeof elecBusy==="function"&&elecBusy()))showElecModal(false);dr.classList.remove("show");lg.classList.remove("show");$("lb").classList.remove("open");if(typeof closeElecLB==="function")closeElecLB();$("sidebar").classList.remove("show");$("sbOv").classList.remove("show");}});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"){showModal(false);closeLockView();closeImportModal();if(typeof showElecModal==="function"&&!(typeof elecBusy==="function"&&elecBusy()))showElecModal(false);dr.classList.remove("show");lg.classList.remove("show");$("lb").classList.remove("open");if(typeof closeElecLB==="function")closeElecLB();$("sidebar").classList.remove("show");$("sbOv").classList.remove("show");}});
 }
 
 /* ===== แสดงรายการบันทึกกิจกรรม (ใหม่→เก่า, เวลาอ่านง่ายภาษาไทย) ===== */

@@ -1,7 +1,7 @@
 /* ============================================================
    orders.js — โมดัลสร้าง/แก้ไขออเดอร์ + แนบรูปสูงสุด MAX_ORDER_IMGS รูป
    ============================================================ */
-let editId=null, mImgs=[], mRemoved=[], tmpStatus=null;
+let editId=null, mImgs=[], mRemoved=[], tmpStatus=null, mLocked=false;
 
 /* ประเภทงานในโมดัล ขึ้นกับหัวข้อที่เลือก */
 function fillModalCatSelect(secId,selected){
@@ -11,7 +11,9 @@ function fillModalCatSelect(secId,selected){
 }
 
 function openOrder(o){
+  if(o && o.locked){ openLockView(o); return; }   /* ล็อคอยู่ → เปิดหน้าดูอย่างเดียว */
   editId=o?o.id:null;
+  mLocked=false;
   $("mTitle").textContent=o?"แก้ไขออเดอร์":"สร้างออเดอร์ใหม่";
   $("mDelete").style.display=o?"":"none";
   $("oOrder").value=o?o.order_no:"";
@@ -64,12 +66,21 @@ function updateBuyback(){
 }
 function renderModalImgs(){
   const g=$("imgGrid");g.innerHTML="";
+  const n=mImgs.length;
   mImgs.forEach((im,i)=>{
     const url=im.kind==="new"?im.url:imgUrl(editId,im.name);
-    const c=document.createElement("div");c.className="cell";
-    c.innerHTML=`<img src="${url}" alt=""><button class="x" type="button">✕</button>`;
+    const c=document.createElement("div");c.className="cell"+(i===0?" cover":"");
+    c.innerHTML=`<img src="${url}" alt="">
+      ${i===0?`<span class="cover-tag">ปก</span>`:`<button class="star" type="button" title="ตั้งเป็นรูปแรก">⭐</button>`}
+      <button class="x" type="button" title="ลบ">✕</button>
+      <div class="ord">
+        <button class="mv" data-mv="-1" type="button" ${i===0?"disabled":""} title="เลื่อนซ้าย">◀</button>
+        <button class="mv" data-mv="1" type="button" ${i===n-1?"disabled":""} title="เลื่อนขวา">▶</button>
+      </div>`;
     c.querySelector("img").onclick=()=>{$("lbImg").src=url;$("lb").classList.add("open");};
     c.querySelector(".x").onclick=()=>removeModalImg(i);
+    const st=c.querySelector(".star"); if(st) st.onclick=()=>setCoverImg(i);
+    c.querySelectorAll(".mv").forEach(b=>b.onclick=()=>{ if(!b.disabled) moveImg(i,+b.dataset.mv); });
     g.appendChild(c);
   });
   if(mImgs.length<MAX_ORDER_IMGS){
@@ -92,6 +103,9 @@ function removeModalImg(i){
   if(im.kind==="new")URL.revokeObjectURL(im.url);
   mImgs.splice(i,1);renderModalImgs();
 }
+/* ===== ย้ายลำดับรูป (⭐ตั้งเป็นรูปแรก / ◀▶ เลื่อนทีละช่อง) — บันทึกเมื่อกด "บันทึก" ===== */
+function setCoverImg(i){ if(i<=0||i>=mImgs.length)return; const [im]=mImgs.splice(i,1); mImgs.unshift(im); renderModalImgs(); }
+function moveImg(i,dir){ const j=i+dir; if(j<0||j>=mImgs.length)return; const t=mImgs[i]; mImgs[i]=mImgs[j]; mImgs[j]=t; renderModalImgs(); }
 async function saveOrder(){
   const wasEdit=!!editId;
   const id=editId||genId();
@@ -101,6 +115,7 @@ async function saveOrder(){
     status:tmpStatus||"",note:$("oNote").value.trim(),
     price:isCardSection(sec)?$("oPrice").value:"", wstart:isCardSection(sec)?$("oWStart").value:"", wterm:isCardSection(sec)?$("oTerm").value:"",
     product:isCardSection(sec)?$("oProduct").value.trim():"", cardno:isCardSection(sec)?$("oCardNo").value.trim():"",
+    locked:mLocked,
     images:[]};
   const btn=$("mSave");btn.disabled=true;
   if(Store.mode==="supabase"){
@@ -143,3 +158,53 @@ async function deleteOrder(){
   showModal(false);renderAll();toast("ลบออเดอร์แล้ว");
 }
 function showModal(on){$("modal").classList.toggle("show",on);$("ov").classList.toggle("show",on);if(!on){editId=null;mImgs=[];mRemoved=[];}}
+
+/* ============================================================
+   ล็อค / ปลดล็อค / หน้าดูอย่างเดียว (read-only)
+   ============================================================ */
+async function lockCurrentOrder(){
+  if(!confirm("ล็อคออเดอร์นี้?\nหลังล็อคจะเปิดดูได้อย่างเดียว — ต้องใส่รหัสผ่านเพื่อกลับมาแก้ไข"))return;
+  mLocked=true;
+  await saveOrder();
+  toast("🔒 ล็อคออเดอร์แล้ว");
+}
+function openLockView(o){
+  const plan=cardPlan(o.section), cd=plan?fmtCountdown(o):null;
+  const rows=[
+    ["🧾 เลขออเดอร์", o.order_no?("#"+esc(o.order_no)):"—"],
+    ["👤 ชื่อลูกค้า", esc(o.customer||"—")],
+    ["📅 วันที่", o.date?esc(dpFormat(o.date)):"—"],
+  ];
+  if(plan){
+    const price=Number(o.price)||0, end=warrantyEnd(o);
+    rows.push(["💰 มูลค่าบัตร (เต็ม)", "฿"+fmtMoney(price)]);
+    rows.push([`💵 ราคารับซื้อคืน ${Math.round(plan.rate*100)}%`, "฿"+fmtMoney(price*plan.rate)]);
+    rows.push(["⏳ เหลือระยะเวลา", cd?(cd.expired?"⛔ ครบกำหนดแล้ว":cd.text):"—", end?end.toISOString():""]);
+  }
+  const imgs=o.images||[];
+  const imgHtml=imgs.length
+    ? `<div class="lv-imgs">`+imgs.map(nm=>{const u=imgUrl(o.id,nm);
+        return `<figure class="lv-cell"><img loading="lazy" src="${u}" data-full="${u}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'iph',textContent:'⚠️'}))"></figure>`;}).join("")+`</div>`
+    : `<div class="lv-noimg">— ไม่มีรูป —</div>`;
+  $("lockTitle").textContent="🔒 "+(o.order_no?("#"+o.order_no):"ออเดอร์");
+  $("lockBody").innerHTML=
+    `<div class="lv-rows">`+rows.map(r=>
+      `<div class="lv-row"><span class="lv-l">${r[0]}</span><span class="lv-v num" ${r[2]?`data-cd data-end="${r[2]}"`:""}>${r[1]}</span></div>`
+    ).join("")+`</div>
+     <div class="lv-imgs-h">🖼️ รูปภาพ (${imgs.length})</div>${imgHtml}`;
+  $("lockBody").querySelectorAll(".lv-cell img").forEach(im=>im.onclick=()=>{$("lbImg").src=im.dataset.full;$("lb").classList.add("open");});
+  $("lockUnlock").onclick=()=>unlockOrder(o);
+  $("lockModal").classList.add("show"); $("lockOv").classList.add("show");
+}
+function closeLockView(){ $("lockModal").classList.remove("show"); $("lockOv").classList.remove("show"); }
+async function unlockOrder(o){
+  const pass=prompt("ใส่รหัสผ่านเพื่อปลดล็อคและกลับมาแก้ไข:");
+  if(pass===null)return;
+  if(pass.trim()!==UNLOCK_PASSWORD){ toast("รหัสผ่านไม่ถูกต้อง"); return; }
+  o.locked=false;
+  await Store.saveOrder(o);
+  Log.add("edit_order","ออเดอร์ #"+(o.order_no||"(ไม่มีเลข)"),"ปลดล็อคออเดอร์");
+  closeLockView(); renderAll();
+  openOrder(DB.orders.find(x=>x.id===o.id)||o);
+  toast("🔓 ปลดล็อคแล้ว");
+}

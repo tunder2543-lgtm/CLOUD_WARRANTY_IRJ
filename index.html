@@ -10,9 +10,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<link rel="stylesheet" href="css/base.css?v=24">
-<link rel="stylesheet" href="css/layout.css?v=24">
-<link rel="stylesheet" href="css/components.css?v=24">
+<link rel="stylesheet" href="css/base.css?v=25">
+<link rel="stylesheet" href="css/layout.css?v=25">
+<link rel="stylesheet" href="css/components.css?v=25">
 </head>
 <body>
 <div class="shell">
@@ -131,8 +131,23 @@
     <div class="mactions">
       <span class="prog" id="mProg"></span>
       <button class="btn danger" id="mDelete" style="display:none">ลบออเดอร์</button>
+      <button class="btn ghost" id="mLock">🔒 ล็อค</button>
       <button class="btn ghost" id="mCancel">ยกเลิก</button>
       <button class="btn primary" id="mSave">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- โมดัลดูออเดอร์แบบล็อค (read-only) -->
+<div class="ov" id="lockOv"></div>
+<div class="modal" id="lockModal">
+  <div class="mhead"><h2 id="lockTitle">🔒 ออเดอร์</h2><button class="close" id="lockClose">✕</button></div>
+  <div class="form">
+    <div class="lock-note">🔒 ออเดอร์นี้ถูกล็อค — ดูได้อย่างเดียว แก้ไขไม่ได้</div>
+    <div id="lockBody"></div>
+    <div class="mactions">
+      <button class="btn ghost" id="lockCloseBtn">ปิด</button>
+      <button class="btn primary" id="lockUnlock">🔓 ปลดล็อค (ใส่รหัส)</button>
     </div>
   </div>
 </div>
@@ -270,16 +285,16 @@
 </div>
 
 <!-- สคริปต์ (เรียงลำดับสำคัญ: config → helpers → store → log → app → orders → settings → main) -->
-<script src="js/config.js?v=24"></script>
-<script src="js/helpers.js?v=24"></script>
-<script src="js/datepicker.js?v=24"></script>
-<script src="js/store.js?v=24"></script>
-<script src="js/log.js?v=24"></script>
-<script src="js/app.js?v=24"></script>
-<script src="js/orders.js?v=24"></script>
-<script src="js/elec.js?v=24"></script>
-<script src="js/settings.js?v=24"></script>
-<script src="js/import-excel.js?v=24"></script>
-<script src="js/main.js?v=24"></script>
+<script src="js/config.js?v=25"></script>
+<script src="js/helpers.js?v=25"></script>
+<script src="js/datepicker.js?v=25"></script>
+<script src="js/store.js?v=25"></script>
+<script src="js/log.js?v=25"></script>
+<script src="js/app.js?v=25"></script>
+<script src="js/orders.js?v=25"></script>
+<script src="js/elec.js?v=25"></script>
+<script src="js/settings.js?v=25"></script>
+<script src="js/import-excel.js?v=25"></script>
+<script src="js/main.js?v=25"></script>
 </body>
 </html>
