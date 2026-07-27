@@ -10,9 +10,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<link rel="stylesheet" href="css/base.css?v=21">
-<link rel="stylesheet" href="css/layout.css?v=21">
-<link rel="stylesheet" href="css/components.css?v=21">
+<link rel="stylesheet" href="css/base.css?v=22">
+<link rel="stylesheet" href="css/layout.css?v=22">
+<link rel="stylesheet" href="css/components.css?v=22">
 </head>
 <body>
 <div class="shell">
@@ -65,7 +65,7 @@
   </section>
 
   <div class="toolbar">
-    <div class="search"><span class="ic">🔍</span><input id="search" placeholder="ค้นหา เลขออเดอร์ / ชื่อลูกค้า"></div>
+    <div class="search"><span class="ic">🔍</span><input id="search" placeholder="ค้นหา เลขออเดอร์ / ชื่อลูกค้า / เลขบัตร / สินค้า"></div>
     <div class="selwrap"><select id="fCat"></select></div>
     <div class="selwrap"><select id="fDate"></select></div>
     <div class="seg"><button data-v="cat" class="on">ตามประเภท</button><button data-v="status">ตามสถานะ</button></div>
@@ -100,6 +100,10 @@
     <div id="cardFields" style="display:none">
       <div class="card-box" id="cardBox">
         <div class="card-box-h" id="cardBoxHead">💳 ข้อมูลประกันบัตรแข็ง</div>
+        <div class="frow">
+          <div class="fld"><label>🏷️ ชื่อสินค้า</label><input id="oProduct" placeholder="เช่น พระสมเด็จหยกเขียว"></div>
+          <div class="fld"><label>🔖 เลขบัตรประกัน</label><input id="oCardNo" placeholder="เช่น G-000123"></div>
+        </div>
         <div class="frow">
           <div class="fld"><label>💰 ราคา/มูลค่าบัตร (บาท)</label><input type="number" id="oPrice" min="0" step="1" placeholder="เช่น 10000"></div>
           <div class="fld"><label>⏳ ระยะประกัน (ปี)</label><input type="number" id="oTerm" min="1" step="1" placeholder="5"></div>
@@ -262,15 +266,15 @@
 </div>
 
 <!-- สคริปต์ (เรียงลำดับสำคัญ: config → helpers → store → log → app → orders → settings → main) -->
-<script src="js/config.js?v=21"></script>
-<script src="js/helpers.js?v=21"></script>
-<script src="js/store.js?v=21"></script>
-<script src="js/log.js?v=21"></script>
-<script src="js/app.js?v=21"></script>
-<script src="js/orders.js?v=21"></script>
-<script src="js/elec.js?v=21"></script>
-<script src="js/settings.js?v=21"></script>
-<script src="js/import-excel.js?v=21"></script>
-<script src="js/main.js?v=21"></script>
+<script src="js/config.js?v=22"></script>
+<script src="js/helpers.js?v=22"></script>
+<script src="js/store.js?v=22"></script>
+<script src="js/log.js?v=22"></script>
+<script src="js/app.js?v=22"></script>
+<script src="js/orders.js?v=22"></script>
+<script src="js/elec.js?v=22"></script>
+<script src="js/settings.js?v=22"></script>
+<script src="js/import-excel.js?v=22"></script>
+<script src="js/main.js?v=22"></script>
 </body>
 </html>

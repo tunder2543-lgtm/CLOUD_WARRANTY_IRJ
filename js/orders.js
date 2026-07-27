@@ -22,6 +22,8 @@ function openOrder(o){
   $("oSection").value=o?(o.section||""):(currentSection&&currentSection!=="__none"?currentSection:"");
   fillModalCatSelect($("oSection").value,o?o.category:"");
   /* ฟิลด์บัตรแข็ง */
+  $("oProduct").value=o?(o.product||""):"";
+  $("oCardNo").value=o?(o.cardno||""):"";
   $("oPrice").value=o?(o.price==null?"":o.price):"";
   $("oTerm").value=o?(o.wterm||""):"";
   $("oWStart").value=o?(o.wstart||""):"";
@@ -98,6 +100,7 @@ async function saveOrder(){
     category:$("oCat").value||"",section:sec,
     status:tmpStatus||"",note:$("oNote").value.trim(),
     price:isCardSection(sec)?$("oPrice").value:"", wstart:isCardSection(sec)?$("oWStart").value:"", wterm:isCardSection(sec)?$("oTerm").value:"",
+    product:isCardSection(sec)?$("oProduct").value.trim():"", cardno:isCardSection(sec)?$("oCardNo").value.trim():"",
     images:[]};
   const btn=$("mSave");btn.disabled=true;
   if(Store.mode==="supabase"){

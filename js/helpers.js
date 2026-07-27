@@ -52,11 +52,13 @@ const orderToRow=o=>({id:o.id,order_no:o.order_no||null,customer:o.customer||nul
   section_id:o.section||null,
   price:(o.price===""||o.price==null)?null:Number(o.price),
   warranty_start:o.wstart||null, term_years:(o.wterm==null||o.wterm==="")?null:Number(o.wterm),
+  product_name:o.product||null, card_no:o.cardno||null,
   images:o.images||[],updated_at:new Date().toISOString()});
 const rowToOrder=r=>({id:r.id,order_no:r.order_no||"",customer:r.customer||"",category:r.category||"",
   status:r.status||"",note:r.note||"",date:r.order_date||"",
   section:r.section_id||"",
   price:(r.price==null?"":r.price), wstart:r.warranty_start||"", wterm:(r.term_years==null?"":r.term_years),
+  product:r.product_name||"", cardno:r.card_no||"",
   images:Array.isArray(r.images)?r.images:(r.images?(()=>{try{return JSON.parse(r.images)}catch(e){return[]}})():[])});
 
 /* ===== เงิน + นับถอยหลังประกันบัตรแข็ง ===== */

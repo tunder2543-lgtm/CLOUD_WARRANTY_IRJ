@@ -270,7 +270,7 @@ function visibleOrders(){
     if(fCat!=="all"&&o.category!==fCat)return false;
     if(fStat!=="all"){ if(fStat==="doneship"){if(o.status!=="done"&&o.status!=="ship")return false;} else if(o.status!==fStat)return false; }
     if(fDate!=="all"&&(o.date||"")!==fDate)return false;
-    if(q){ if(![o.order_no,o.customer].join(" ").toLowerCase().includes(q))return false; }
+    if(q){ if(![o.order_no,o.customer,o.product,o.cardno].join(" ").toLowerCase().includes(q))return false; }
     return true;
   });
 }
@@ -303,7 +303,11 @@ function cardInfoHtml(o){
   const price=Number(o.price)||0, bb=price*plan.rate;
   const end=warrantyEnd(o), cd=fmtCountdown(o);
   const cdHtml=cd?`<div class="cc-cd ${cd.expired?"exp":""}" data-cd data-end="${end?end.toISOString():""}">${cd.text}</div>`:"";
+  const prodHtml=o.product?`<div class="cc-row"><span>🏷️ สินค้า</span><b>${esc(o.product)}</b></div>`:"";
+  const cardnoHtml=o.cardno?`<div class="cc-row"><span>🔖 เลขบัตรประกัน</span><b>${esc(o.cardno)}</b></div>`:"";
   return `<div class="ocard-card" style="--card-c:${plan.color};--card-tint:${plan.tint}">
+    ${prodHtml}
+    ${cardnoHtml}
     <div class="cc-row"><span>${plan.emoji} มูลค่าบัตร</span><b>฿${fmtMoney(price)}</b></div>
     <div class="cc-row"><span>💵 รับซื้อคืน ${Math.round(plan.rate*100)}%</span><b class="cc-bb">฿${fmtMoney(bb)}</b></div>
     ${cdHtml}
