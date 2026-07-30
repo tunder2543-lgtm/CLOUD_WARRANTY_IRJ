@@ -10,9 +10,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<link rel="stylesheet" href="css/base.css?v=30">
-<link rel="stylesheet" href="css/layout.css?v=30">
-<link rel="stylesheet" href="css/components.css?v=30">
+<link rel="stylesheet" href="css/base.css?v=31">
+<link rel="stylesheet" href="css/layout.css?v=31">
+<link rel="stylesheet" href="css/components.css?v=31">
 </head>
 <body>
 <div class="shell">
@@ -220,6 +220,11 @@
       <input type="file" id="importFile" accept="application/json" hidden>
     </div>
     <div class="dsec">
+      <div class="st">บำรุงรักษารูปภาพ</div>
+      <button class="addbtn" id="btnCompressImgs" style="width:100%">🗜️ บีบอัดรูปเก่าให้เล็กลง</button>
+      <div id="compressProg" style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55">ย่อรูปใน <code>warranty-images</code> ที่ใหญ่เกินไป (ด้านยาวสุด 1600px) ให้เปิดออเดอร์เร็วขึ้น · เขียนทับไฟล์เดิมถาวร · ทำครั้งเดียวพอ</div>
+    </div>
+    <div class="dsec">
       <div class="st">ที่เก็บข้อมูล</div>
       <div class="store-note"><b id="storeStatus">กำลังเชื่อมต่อ…</b><br><br>
         ซิงก์ขึ้น Supabase ครบทุกส่วน: ออเดอร์ <code>Warranty_orders</code> · ประเภทงาน <code>Warranty_categories</code> · หมวดหมู่พิเศษ <code>Warranty_sections</code> · บันทึกกิจกรรม <code>Warranty_logs</code> · รูป bucket <code>warranty-images</code> — สำรองในเครื่องอัตโนมัติ</div>
@@ -285,16 +290,16 @@
 </div>
 
 <!-- สคริปต์ (เรียงลำดับสำคัญ: config → helpers → store → log → app → orders → settings → main) -->
-<script src="js/config.js?v=30"></script>
-<script src="js/helpers.js?v=30"></script>
-<script src="js/datepicker.js?v=30"></script>
-<script src="js/store.js?v=30"></script>
-<script src="js/log.js?v=30"></script>
-<script src="js/app.js?v=30"></script>
-<script src="js/orders.js?v=30"></script>
-<script src="js/elec.js?v=30"></script>
-<script src="js/settings.js?v=30"></script>
-<script src="js/import-excel.js?v=30"></script>
-<script src="js/main.js?v=30"></script>
+<script src="js/config.js?v=31"></script>
+<script src="js/helpers.js?v=31"></script>
+<script src="js/datepicker.js?v=31"></script>
+<script src="js/store.js?v=31"></script>
+<script src="js/log.js?v=31"></script>
+<script src="js/app.js?v=31"></script>
+<script src="js/orders.js?v=31"></script>
+<script src="js/elec.js?v=31"></script>
+<script src="js/settings.js?v=31"></script>
+<script src="js/import-excel.js?v=31"></script>
+<script src="js/main.js?v=31"></script>
 </body>
 </html>

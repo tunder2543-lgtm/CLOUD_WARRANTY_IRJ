@@ -139,7 +139,7 @@ async function saveOrder(){
       if(im.kind==="existing"){finalNames.push(im.name);continue;}
       $("mProg").textContent=`กำลังอัปโหลดรูป ${++done}/${news}…`;
       const nm=safeName(im.file,idx++);
-      try{ await Store.uploadImage(id,nm,im.file); finalNames.push(nm); }
+      try{ const f=await compressImageFile(im.file); await Store.uploadImage(id,nm,f); finalNames.push(nm); }
       catch(e){ console.warn("upload",e&&e.message||e); toast("อัปโหลดบางรูปไม่สำเร็จ: "+(e&&e.message||"")); }
     }
     for(const rn of mRemoved){ await Store.removeImage(id,rn); }

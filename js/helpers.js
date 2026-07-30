@@ -97,3 +97,35 @@ function fmtCountdown(o){
 /* ===== ตัวแปลง ประเภทงาน (หมวด) — ผูกกับหัวข้อ (section) ===== */
 const catToRow=c=>({id:c.id,name:c.name,color:c.color||null,sort:c.sort||0,section_id:c.section||null});
 const rowToCat=r=>({id:r.id,name:r.name,color:r.color||"#7cb5a0",sort:r.sort||0,section:r.section_id||""});
+
+/* ===== บีบอัด/ย่อรูปฝั่งเบราว์เซอร์ (canvas) — ลดขนาดไฟล์ให้โหลดเร็วขึ้น =====
+   • ย่อด้านยาวสุดไม่เกิน maxDim · คงชนิดไฟล์เดิม (jpeg→jpeg คุณภาพ quality, png→png)
+   • ข้ามชนิดอื่น (webp/gif…) และคืนไฟล์เดิมถ้าย่อแล้วไม่เล็กลง */
+async function compressImageBlob(blob,{maxDim=1600,quality=0.85}={}){
+  const type=(blob.type||"").toLowerCase();
+  const isJpeg=/jpe?g/.test(type), isPng=/png/.test(type);
+  if(!isJpeg&&!isPng) return blob;
+  const url=URL.createObjectURL(blob);
+  try{
+    const img=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=url;});
+    const w=img.naturalWidth,h=img.naturalHeight;
+    if(!w||!h) return blob;
+    const scale=Math.min(1,maxDim/Math.max(w,h));
+    if(scale>=1 && blob.size<=400*1024) return blob;   /* เล็กอยู่แล้ว ไม่ต้องยุ่ง */
+    const nw=Math.round(w*scale),nh=Math.round(h*scale);
+    const cv=document.createElement("canvas");cv.width=nw;cv.height=nh;
+    cv.getContext("2d").drawImage(img,0,0,nw,nh);
+    const outType=isPng?"image/png":"image/jpeg";
+    const out=await new Promise(res=>cv.toBlob(res,outType,isPng?undefined:quality));
+    return (out&&out.size<blob.size)?out:blob;
+  }catch(e){ console.warn("compressImage",e&&e.message||e); return blob; }
+  finally{ URL.revokeObjectURL(url); }
+}
+/* รับ File → คืน File (คงชื่อเดิม เพื่อไม่ต้องแก้ชื่อ/นามสกุลใน DB) */
+async function compressImageFile(file){
+  try{
+    const b=await compressImageBlob(file,{maxDim:1600,quality:0.85});
+    if(b===file||b.size>=file.size) return file;
+    return new File([b],file.name,{type:b.type,lastModified:file.lastModified});
+  }catch(e){ return file; }
+}

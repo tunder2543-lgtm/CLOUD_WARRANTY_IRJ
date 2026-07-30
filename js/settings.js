@@ -62,3 +62,45 @@ async function addCat(){
 /* ---------- นำเข้า / ส่งออก ---------- */
 function exportJSON(){const b=new Blob([Store.export()],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="warranty-orders.json";a.click();URL.revokeObjectURL(a.href);toast("ส่งออกแล้ว");}
 function importJSON(file){const r=new FileReader();r.onload=async()=>{try{const o=JSON.parse(r.result);if(!o.orders)throw 0;Store.replaceAll(o);DB=Store._cache;DB.categories=DB.categories||[];DB.sections=DB.sections||[];DB.logs=DB.logs||[];CATEGORIES=DB.categories;await Store.pushAll();renderAll();Log.add("import_json","นำเข้าข้อมูล","นำเข้า "+(DB.orders||[]).length+" ออเดอร์ · "+(CATEGORIES||[]).length+" ประเภท");toast("นำเข้าแล้ว");}catch(e){toast("ไฟล์ไม่ถูกต้อง");}};r.readAsText(file);}
+
+/* ---------- บีบอัดรูปเก่าใน bucket warranty-images (เขียนทับไฟล์เดิม) ---------- */
+let compressBusy=false;
+async function migrateCompressImages(){
+  if(compressBusy) return;
+  if(Store.mode!=="supabase"||!sb){ toast("ต้องออนไลน์ (เชื่อม Supabase) ก่อน"); return; }
+  if(!confirm("บีบอัดรูปเก่าทั้งหมดให้เล็กลง?\n\n• ย่อด้านยาวสุดเหลือ 1600px แล้วเขียนทับไฟล์เดิม (ถาวร กู้ความละเอียดเดิมไม่ได้)\n• โหลดรูปทั้งหมดมาย่อ อาจใช้เวลาสักครู่ — อย่าปิดหน้านี้จนกว่าจะเสร็จ")) return;
+  const btn=$("btnCompressImgs"), prog=$("compressProg");
+  const setP=t=>{ if(prog) prog.textContent=t; };
+  compressBusy=true; if(btn) btn.disabled=true;
+  let done=0, shrunk=0, saved=0, failed=0, total=0;
+  try{
+    setP("กำลังอ่านรายการรูป…");
+    const top=await elecList(BUCKET,"");                       /* elecList: global จาก elec.js */
+    const folders=top.filter(e=>e.id===null&&e.name!==".emptyFolderPlaceholder").map(e=>e.name);
+    const paths=[];
+    for(const f of folders){
+      const entries=await elecList(BUCKET,f);
+      entries.filter(e=>e.id!==null&&e.name!==".emptyFolderPlaceholder").forEach(e=>paths.push(f+"/"+e.name));
+    }
+    total=paths.length;
+    for(const p of paths){
+      done++;
+      setP(`กำลังบีบอัด ${done}/${total}… (ย่อแล้ว ${shrunk} รูป · ประหยัด ${(saved/1048576).toFixed(1)} MB)`);
+      try{
+        const url=`${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${p.split("/").map(encodeURIComponent).join("/")}`;
+        const res=await fetch(url); if(!res.ok) throw new Error("HTTP "+res.status);
+        const blob=await res.blob();
+        const out=await compressImageBlob(blob,{maxDim:1600,quality:0.85});
+        if(out && out.size<blob.size){
+          const {error}=await sb.storage.from(BUCKET).upload(p,out,{upsert:true,contentType:out.type||blob.type});
+          if(error) throw error;
+          shrunk++; saved+=(blob.size-out.size);
+        }
+      }catch(e){ failed++; console.warn("compress-migrate",p,e&&e.message||e); }
+    }
+    setP(`เสร็จ: ย่อ ${shrunk}/${total} รูป · ประหยัด ${(saved/1048576).toFixed(1)} MB${failed?` · พลาด ${failed}`:""}`);
+    Log.add("compress_images","บีบอัดรูปเก่า",`ย่อ ${shrunk}/${total} รูป · ประหยัด ${(saved/1048576).toFixed(1)} MB`);
+    toast(`บีบอัดเสร็จ · ประหยัด ${(saved/1048576).toFixed(1)} MB`);
+  }catch(e){ setP("ผิดพลาด: "+(e&&e.message||e)); toast("บีบอัดไม่สำเร็จ"); }
+  finally{ compressBusy=false; if(btn) btn.disabled=false; }
+}
