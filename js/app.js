@@ -352,7 +352,7 @@ function orderCard(o){
       ${cover?`<img loading="lazy" src="${cover}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph',textContent:'🖼️'}))">`:`<div class="ph">📄</div>`}
       ${st?`<span class="stp" style="background:${st.c}">${st.label}</span>`:""}
       <span class="cnt">🖼️ ${o.images?o.images.length:0}</span>
-      ${o.locked?`<span class="lockbadge" title="ล็อคอยู่ — กดเพื่อดู">🔒</span>`:""}
+      <button class="lockbtn${o.locked?" on":""}" type="button" title="${o.locked?"ล็อคอยู่ — กดเพื่อปลดล็อค":"กดเพื่อล็อคออเดอร์"}">${o.locked?"🔒":"🔓"}</button>
     </div>
     <div class="ob">
       <div class="onum">${o.order_no?"#"+esc(o.order_no):"(ไม่มีเลข)"}</div>
@@ -364,5 +364,7 @@ function orderCard(o){
       ${cardInfoHtml(o)}
     </div>`;
   el.onclick=()=>openOrder(o);
+  const lb=el.querySelector(".lockbtn");
+  if(lb) lb.onclick=e=>{ e.stopPropagation(); toggleLockOrder(o); };
   return el;
 }

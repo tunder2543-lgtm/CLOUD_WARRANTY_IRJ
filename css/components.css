@@ -119,7 +119,13 @@
 .imgpick .cell .ord .mv:not(:disabled):hover{background:var(--sage);color:#fff}
 
 /* ===== ป้ายล็อคบนการ์ดออเดอร์ ===== */
-.ocard .cover .lockbadge{position:absolute;right:8px;top:8px;background:rgba(59,69,63,.85);color:#fff;font-size:12px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;z-index:2}
+.ocard .cover .lockbtn{position:absolute;right:8px;top:8px;width:28px;height:28px;border:none;border-radius:50%;
+  background:rgba(59,69,63,.72);color:#fff;font-size:13px;line-height:1;display:grid;place-items:center;cursor:pointer;
+  z-index:3;opacity:.6;transition:opacity .2s,transform .15s,background .2s}
+.ocard:hover .cover .lockbtn{opacity:1}
+.ocard .cover .lockbtn:hover{transform:scale(1.12)}
+.ocard .cover .lockbtn.on{opacity:1;background:#f0c05a;color:#5a4410}   /* ล็อคอยู่ → เหลือง โชว์เสมอ */
+.ocard .cover .lockbtn.on:hover{background:#e9b13f}
 
 /* ===== หน้าดูออเดอร์แบบล็อค (read-only) ===== */
 .lock-note{background:#fff4e0;border:1px solid #f0d9a8;color:#8a6d3b;font-size:12.5px;padding:9px 12px;border-radius:12px;margin-bottom:14px}

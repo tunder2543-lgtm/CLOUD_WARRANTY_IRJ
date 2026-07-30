@@ -206,6 +206,23 @@ function renderLockImgs(){
   wrap.querySelectorAll(".lv-cell img").forEach(im=>im.onclick=()=>{$("lbImg").src=im.dataset.full;$("lb").classList.add("open");});
   const mb=$("lockMore"); if(mb) mb.onclick=()=>{ lockShowAll=true; renderLockImgs(); };
 }
+/* ล็อค/ปลดล็อคจากปุ่มบนการ์ด (ไม่ต้องเปิดโมดัล) */
+async function toggleLockOrder(o){
+  if(!o) return;
+  if(o.locked){
+    const ok=await askPassword({title:"ปลดล็อคออเดอร์",message:`ปลดล็อค ${o.order_no?"#"+o.order_no:"ออเดอร์นี้"} เพื่อกลับมาแก้ไข`,icon:"🔓",confirmText:"🔓 ปลดล็อค",expect:UNLOCK_PASSWORD});
+    if(!ok) return;
+    o.locked=false; await Store.saveOrder(o);
+    Log.add("edit_order","ออเดอร์ #"+(o.order_no||"(ไม่มีเลข)"),"ปลดล็อคออเดอร์ (จากการ์ด)");
+    renderAll(); toast("🔓 ปลดล็อคแล้ว");
+  }else{
+    const ok=await askConfirm({title:"ล็อคออเดอร์นี้?",message:"หลังล็อคจะเปิดดูได้อย่างเดียว — ต้องใส่รหัสผ่านเพื่อกลับมาแก้ไข",icon:"🔒",confirmText:"🔒 ล็อค"});
+    if(!ok) return;
+    o.locked=true; await Store.saveOrder(o);
+    Log.add("edit_order","ออเดอร์ #"+(o.order_no||"(ไม่มีเลข)"),"ล็อคออเดอร์ (จากการ์ด)");
+    renderAll(); toast("🔒 ล็อคแล้ว");
+  }
+}
 function openLockView(o){
   const plan=cardPlan(o.section), cd=plan?fmtCountdown(o):null;
   const rows=[
