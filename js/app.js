@@ -179,10 +179,10 @@ function renderHome(){
 
 /* ===== หมวดหมู่พิเศษ (เมนูซ้าย กลุ่ม 3) ===== */
 async function addSpecial(){
-  if(DB.sections.length>=SPECIAL_MAX){alert(`หมวดหมู่พิเศษเต็มแล้ว (สูงสุด ${SPECIAL_MAX} หมวด)`);return;}
-  const name=(prompt("ชื่อหมวดหมู่พิเศษ\nเช่น รูปเลเซอร์ใต้ฐาน หลวงปู่ทวดหยกดำ PK099")||"").trim();
+  if(DB.sections.length>=SPECIAL_MAX){await askAlert({title:"หมวดหมู่พิเศษเต็มแล้ว",message:`สร้างได้สูงสุด ${SPECIAL_MAX} หมวด`,icon:"⚠️"});return;}
+  const name=((await askInput({title:"เพิ่มหมวดหมู่พิเศษ",message:"ตั้งชื่อหมวดหมู่",icon:"✏️",placeholder:"เช่น รูปเลเซอร์ใต้ฐาน หลวงปู่ทวดหยกดำ",confirmText:"เพิ่ม"}))||"").trim();
   if(!name)return;
-  if(DB.sections.some(s=>s.name===name)){alert("มีหมวดหมู่ชื่อนี้แล้ว");return;}
+  if(DB.sections.some(s=>s.name===name)){await askAlert({title:"มีหมวดหมู่ชื่อนี้แล้ว",icon:"⚠️"});return;}
   const id="sp_"+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36);
   DB.sections.push({id,name,sort:DB.sections.length+1});
   await Store.saveSections(DB.sections);
@@ -192,7 +192,7 @@ async function addSpecial(){
 async function delSpecial(id){
   const s=DB.sections.find(x=>x.id===id); if(!s)return;
   const n=sectionCount(id);
-  if(!confirm(`ลบ "${s.name}"?${n?`\nออเดอร์ ${n} รายการจะกลายเป็น "ยังไม่ระบุหัวข้อ"`:""}`))return;
+  if(!(await askConfirm({title:`ลบ "${s.name}"?`,message:n?`ออเดอร์ ${n} รายการจะกลายเป็น "ยังไม่ระบุหัวข้อ"`:"",icon:"🗑",confirmText:"ลบ",danger:true})))return;
   DB.sections=DB.sections.filter(x=>x.id!==id);
   await Store.deleteSection(id);
   Log.add("del_special","หมวดหมู่พิเศษ: "+s.name,n?("ออเดอร์ "+n+" รายการย้ายไปยังไม่ระบุหัวข้อ"):null);

@@ -37,8 +37,8 @@ function renderCatManager(){
     const el=document.createElement("div");el.className="zitem";
     el.innerHTML=`<span class="zc" style="background:${c.color}"></span><span class="zn">${esc(c.name)}</span><span class="zct num">${orderCount(c.id)} ออเดอร์</span><button class="del">🗑</button>`;
     el.querySelector(".del").onclick=async()=>{
-      if(orderCount(c.id)>0){alert(`ประเภท "${c.name}" ยังมีออเดอร์ ${orderCount(c.id)} รายการ — ย้ายออกก่อน`);return;}
-      if(!confirm(`ลบประเภท "${c.name}"?`))return;
+      if(orderCount(c.id)>0){await askAlert({title:"ลบไม่ได้",message:`ประเภท "${c.name}" ยังมีออเดอร์ ${orderCount(c.id)} รายการ — ย้ายออกก่อน`,icon:"⚠️"});return;}
+      if(!(await askConfirm({title:`ลบประเภท "${c.name}"?`,icon:"🗑",confirmText:"ลบ",danger:true})))return;
       CATEGORIES=CATEGORIES.filter(x=>x.id!==c.id);
       await Store.saveCategories(CATEGORIES);await Store.deleteCategory(c.id);
       Log.add("del_category","ประเภทงาน: "+c.name,s?("จากหัวข้อ "+s.name):null);
@@ -49,9 +49,9 @@ function renderCatManager(){
 }
 async function addCat(){
   const secId=(currentSection&&currentSection!=="__none")?currentSection:null;
-  if(!secId){alert("เปิดหัวข้อจากเมนูซ้ายก่อน แล้วค่อยเพิ่มประเภทงานของหัวข้อนั้น");return;}
+  if(!secId){await askAlert({title:"เลือกหัวข้อก่อน",message:"เปิดหัวข้อจากเมนูซ้ายก่อน แล้วค่อยเพิ่มประเภทงานของหัวข้อนั้น",icon:"⚠️"});return;}
   const inp=$("newCat"),name=inp.value.trim();if(!name){inp.focus();return;}
-  if(catsFor(secId).some(c=>c.name===name)){alert("หัวข้อนี้มีประเภทชื่อนี้แล้ว");return;}
+  if(catsFor(secId).some(c=>c.name===name)){await askAlert({title:"ชื่อซ้ำ",message:"หัวข้อนี้มีประเภทชื่อนี้แล้ว",icon:"⚠️"});return;}
   CATEGORIES.push({id:catGenId(),name,color:pickCatColor,sort:catsFor(secId).length+1,section:secId});
   await Store.saveCategories(CATEGORIES);
   const s=sectionById(secId);
@@ -68,7 +68,7 @@ let compressBusy=false;
 async function migrateCompressImages(){
   if(compressBusy) return;
   if(Store.mode!=="supabase"||!sb){ toast("ต้องออนไลน์ (เชื่อม Supabase) ก่อน"); return; }
-  if(!confirm("บีบอัดรูปเก่าทั้งหมดให้เล็กลง?\n\n• ย่อด้านยาวสุดเหลือ 1600px แล้วเขียนทับไฟล์เดิม (ถาวร กู้ความละเอียดเดิมไม่ได้)\n• โหลดรูปทั้งหมดมาย่อ อาจใช้เวลาสักครู่ — อย่าปิดหน้านี้จนกว่าจะเสร็จ")) return;
+  if(!(await askConfirm({title:"บีบอัดรูปเก่าให้เล็กลง?",message:"ย่อด้านยาวสุดเหลือ 1600px แล้วเขียนทับไฟล์เดิม (ถาวร กู้ความละเอียดเดิมไม่ได้)\nโหลดรูปทั้งหมดมาย่อ อาจใช้สักครู่ — อย่าปิดหน้านี้จนเสร็จ",icon:"🗜️",confirmText:"เริ่มบีบอัด",danger:true}))) return;
   const btn=$("btnCompressImgs"), prog=$("compressProg");
   const setP=t=>{ if(prog) prog.textContent=t; };
   compressBusy=true; if(btn) btn.disabled=true;

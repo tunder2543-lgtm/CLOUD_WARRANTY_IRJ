@@ -84,7 +84,7 @@ function wire(){
   $("impTemplate").onclick=importTemplate;
   $("impBack").onclick=()=>{$("impStep1").style.display="";$("impStep2").style.display="none";};
   $("impConfirm").onclick=confirmImport;
-  $("btnReset").onclick=async()=>{if(confirm("ล้างออเดอร์ทั้งหมด?")){await Store.reset();DB=Store._cache;CATEGORIES=DB.categories||[];renderAll();Log.add("reset","ข้อมูลทั้งหมด","ล้างออเดอร์ทั้งหมดออกจากระบบ");toast("ล้างข้อมูลแล้ว");}};
+  $("btnReset").onclick=async()=>{if(await askConfirm({title:"ล้างออเดอร์ทั้งหมด?",message:"ลบออเดอร์ทั้งหมดออกจากระบบ (คงประเภทงาน · หมวดหมู่พิเศษ · บันทึกไว้)",icon:"🗑",confirmText:"ล้างข้อมูล",danger:true})){await Store.reset();DB=Store._cache;CATEGORIES=DB.categories||[];renderAll();Log.add("reset","ข้อมูลทั้งหมด","ล้างออเดอร์ทั้งหมดออกจากระบบ");toast("ล้างข้อมูลแล้ว");}};
   /* ลิ้นชักบันทึกกิจกรรม (Activity Log) */
   const lg=$("logDrawer");
   $("btnLog").onclick=()=>{renderLogs();lg.classList.add("show");};
@@ -92,7 +92,7 @@ function wire(){
   $("logClear").onclick=async()=>{
     const n=(Store._cache&&Store._cache.logs)?Store._cache.logs.length:0;
     if(!n){toast("ยังไม่มีบันทึก");return;}
-    if(!confirm(`ล้างประวัติการทำงานทั้งหมด (${n} รายการ)?`))return;
+    if(!(await askConfirm({title:"ล้างประวัติทั้งหมด?",message:`ล้างประวัติการทำงานทั้งหมด (${n} รายการ)`,icon:"🧹",confirmText:"ล้างประวัติ",danger:true})))return;
     await Store.clearLogs(); renderLogs(); toast("ล้างประวัติแล้ว");
   };
   /* lightbox + Escape */

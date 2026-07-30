@@ -130,34 +130,45 @@ async function compressImageFile(file){
   }catch(e){ return file; }
 }
 
-/* ===== Popup ยืนยัน / ใส่รหัสผ่าน (แทน confirm()/prompt() เดิม) =====
+/* ===== Popup สวยๆ แทน confirm()/prompt()/alert() ของเบราว์เซอร์ =====
    askConfirm({title,message,icon,confirmText,cancelText,danger}) → Promise<boolean>
-   askPassword({...,expect}) → Promise<boolean> (ใส่ผิด → แจ้งในตัว ให้ลองใหม่)
-   ยกเลิก/Esc → false · Enter → ยืนยัน */
-let _dlgResolve=null, _dlgExpect=null, _dlgMode="password";
+   askAlert({title,message,icon,confirmText})                     → Promise (OK อย่างเดียว)
+   askInput({title,message,icon,placeholder,value,confirmText})   → Promise<string|null>
+   askPassword({...,expect})                                       → Promise<boolean>
+   ยกเลิก/Esc/คลิกพื้นหลัง → false/null · Enter → ยืนยัน */
+let _dlgResolve=null, _dlgExpect=null, _dlgMode="confirm";
 function _openDialog(opts,mode){
   return new Promise(resolve=>{
     _dlgResolve=resolve; _dlgMode=mode;
     _dlgExpect=(mode==="password"&&opts.expect!=null)?String(opts.expect):null;
-    $("pwTitle").textContent=opts.title||(mode==="password"?"ใส่รหัสผ่าน":"ยืนยัน");
+    const isInput=(mode==="password"||mode==="prompt");
+    $("pwTitle").textContent=opts.title||({password:"ใส่รหัสผ่าน",alert:"แจ้งเตือน",prompt:"กรอกข้อมูล"}[mode]||"ยืนยัน");
     $("pwMsg").textContent=opts.message||"";
-    $("pwIcon").textContent=opts.icon||(mode==="password"?"🔒":"❓");
-    $("pwConfirm").textContent=opts.confirmText||"ยืนยัน";
+    $("pwIcon").textContent=opts.icon||({password:"🔒",alert:"⚠️",prompt:"✏️"}[mode]||"❓");
+    $("pwConfirm").textContent=opts.confirmText||(mode==="alert"?"ตกลง":"ยืนยัน");
     $("pwCancel").textContent=opts.cancelText||"ยกเลิก";
+    $("pwCancel").style.display=(mode==="alert")?"none":"";
     $("pwModal").classList.toggle("danger",!!opts.danger);
     $("pwErr").textContent=""; $("pwErr").classList.remove("show");
     $("pwModal").classList.remove("shake");
-    const inp=$("pwInput"); inp.value=""; inp.style.display=(mode==="password")?"":"none";
+    const inp=$("pwInput");
+    inp.style.display=isInput?"":"none";
+    inp.type=(mode==="password")?"password":"text";
+    inp.classList.toggle("text-mode",mode==="prompt");
+    inp.placeholder=(opts.placeholder!=null)?opts.placeholder:(mode==="password"?"• • • •":"");
+    inp.value=(mode==="prompt"&&opts.value)?String(opts.value):"";
     $("pwOv").classList.add("show"); $("pwModal").classList.add("show");
-    setTimeout(()=>{ (mode==="password"?inp:$("pwConfirm")).focus(); },60);
+    setTimeout(()=>{ (isInput?inp:$("pwConfirm")).focus(); },60);
   });
 }
 function askPassword(opts={}){ return _openDialog(opts,"password"); }
 function askConfirm(opts={}){ return _openDialog(opts,"confirm"); }
+function askAlert(opts={}){ return _openDialog(opts,"alert"); }
+function askInput(opts={}){ return _openDialog(opts,"prompt"); }
 function pwSubmit(){
-  if(_dlgMode==="confirm"){ pwCloseModal(true,null); return; }
+  if(_dlgMode==="confirm"||_dlgMode==="alert"){ pwCloseModal(true,null); return; }
   const inp=$("pwInput"), val=inp.value.trim();
-  if(_dlgExpect!=null && val!==_dlgExpect){
+  if(_dlgMode==="password" && _dlgExpect!=null && val!==_dlgExpect){
     const e=$("pwErr"); e.textContent="รหัสผ่านไม่ถูกต้อง ลองอีกครั้ง"; e.classList.add("show");
     const m=$("pwModal"); m.classList.remove("shake"); void m.offsetWidth; m.classList.add("shake");
     inp.value=""; inp.focus();
@@ -168,7 +179,10 @@ function pwSubmit(){
 function pwCloseModal(ok,val){
   $("pwModal").classList.remove("show","shake"); $("pwOv").classList.remove("show");
   const r=_dlgResolve; _dlgResolve=null;
-  if(r) r(_dlgMode==="confirm" ? !!ok : (_dlgExpect!=null ? !!ok : (ok?val:null)));
+  if(!r) return;
+  if(_dlgMode==="prompt") r(ok?val:null);
+  else if(_dlgMode==="password") r(_dlgExpect!=null?!!ok:(ok?val:null));
+  else r(!!ok);   /* confirm / alert */
 }
 function pwCancel(){ pwCloseModal(false,null); }
 function pwActive(){ return $("pwModal") && $("pwModal").classList.contains("show"); }
