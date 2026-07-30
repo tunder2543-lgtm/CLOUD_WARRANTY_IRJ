@@ -221,12 +221,10 @@ function openLockView(o){
   }
   lockViewImgs=o.images||[]; lockViewOrderId=o.id; lockShowAll=false;
   $("lockTitle").textContent="🔒 "+(o.order_no?("#"+o.order_no):"ออเดอร์");
-  $("lockBody").innerHTML=
-    `<div class="lv-rows">`+rows.map(r=>
+  $("lockRows").innerHTML=`<div class="lv-rows">`+rows.map(r=>
       `<div class="lv-row"><span class="lv-l">${r[0]}</span><span class="lv-v num" ${r[2]?`data-cd data-end="${r[2]}"`:""}>${r[1]}</span></div>`
-    ).join("")+`</div>
-     <div class="lv-imgs-h">🖼️ รูปภาพ (${lockViewImgs.length})</div>
-     <div id="lockImgWrap"></div>`;
+    ).join("")+`</div>`;
+  $("lockImgHead").textContent=`🖼️ รูปภาพ (${lockViewImgs.length})`;
   renderLockImgs();
   $("lockUnlock").onclick=()=>unlockOrder(o);
   $("lockModal").classList.add("show"); $("lockOv").classList.add("show");
