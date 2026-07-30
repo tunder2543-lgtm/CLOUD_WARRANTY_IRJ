@@ -226,19 +226,21 @@ function renderElecList(){
       <div class="elec-empty-h">ยังไม่มีกลุ่มรูปในคลังนี้</div>
       <div class="elec-empty-s">กดปุ่ม “＋ นำเข้ารูปใหม่” มุมบนขวา เพื่อเลือกวันที่และเลือกโฟลเดอร์รูปทั้งหมด</div></div>`;
   }else{
-    /* ===== แถบเลือกปี (ค.ศ. ใหม่→เก่า, ไม่ระบุปีไว้ท้ายสุด) ===== */
-    const years=[...new Set(groups.map(o=>yearKey(o.date)))]
-      .sort((a,b)=>{ if(a==="")return 1; if(b==="")return -1; return a<b?1:-1; });
-    /* เลือกปี: ค่าที่ผู้ใช้เลือก (ถ้ายังมีข้อมูล) → ปีปัจจุบัน → ปีล่าสุด */
+    /* ===== แถบเลือกปี (ค.ศ. ใหม่→เก่า) — กลุ่มที่ไม่มีวันที่ รวมเข้ากับ "ปีล่าสุด" ===== */
     const now=new Date(), curYear=String(now.getFullYear());
+    const realYears=groups.map(o=>yearKey(o.date)).filter(y=>y!=="");
+    const latestYear=realYears.length?realYears.slice().sort().slice(-1)[0]:curYear;
+    const effYear=o=>{ const y=yearKey(o.date); return y!==""?y:latestYear; };   /* ไม่มีวันที่ → ปีล่าสุด */
+    const years=[...new Set(groups.map(effYear))].sort((a,b)=> a<b?1:-1);
+    /* เลือกปี: ค่าที่ผู้ใช้เลือก (ถ้ายังมีข้อมูล) → ปีปัจจุบัน → ปีล่าสุด */
     if(!years.includes(elecYear)) elecYear = years.includes(curYear)?curYear:years[0];
     html+=`<div class="eyear-bar">`+years.map(y=>{
-      const cnt=groups.filter(o=>yearKey(o.date)===y).length;
-      const lbl=(y==="")?"ไม่ระบุปี":String(Number(y)+543);
+      const cnt=groups.filter(o=>effYear(o)===y).length;
+      const lbl=String(Number(y)+543);
       return `<button class="eyear-chip${y===elecYear?" on":""}" data-year="${esc(y)}">${esc(lbl)}<span class="eyc-n num">${cnt}</span></button>`;
     }).join("")+`</div>`;
     /* ===== เดือนของปีที่เลือก (ใหม่→เก่า, ไม่มีวันที่ไว้ล่างสุด) ===== */
-    const inYear=groups.filter(o=>yearKey(o.date)===elecYear);
+    const inYear=groups.filter(o=>effYear(o)===elecYear);
     const byMonth=new Map();
     inYear.forEach(o=>{ const k=monthKey(o.date); if(!byMonth.has(k)) byMonth.set(k,[]); byMonth.get(k).push(o); });
     const keys=[...byMonth.keys()].sort((a,b)=>{ if(a==="")return 1; if(b==="")return -1; return a<b?1:-1; });
