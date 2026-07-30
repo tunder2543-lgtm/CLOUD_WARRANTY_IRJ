@@ -30,6 +30,10 @@
 .imgpick .cell .x{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:rgba(59,69,63,.85);color:#fff;border:none;font-size:11px;display:grid;place-items:center}
 .imgpick .add{border:2px dashed var(--line);border-radius:11px;display:grid;place-items:center;aspect-ratio:1;color:var(--muted);font-size:24px;background:var(--bg)}
 .imgpick .add:hover{border-color:var(--sage);color:var(--sage)}
+.imgpick .img-more{cursor:pointer;gap:3px;border-color:var(--sage);color:var(--sage);text-align:center;font-size:11px;line-height:1.25}
+.imgpick .img-more .im-ic{font-size:20px}
+.imgpick .img-more .im-tx{font-weight:600}
+.imgpick .img-more:hover{background:var(--sage);color:#fff}
 .imgcount{font-size:12px;color:var(--muted);margin-top:9px}
 /* กล่องประกันบัตรแข็งในโมดัล */
 .card-box{border:1.5px solid var(--card-c,#e0b34e);background:var(--card-tint,#fbf3e0);border-radius:16px;padding:14px 15px;margin-bottom:15px}

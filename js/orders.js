@@ -1,7 +1,8 @@
 /* ============================================================
    orders.js — โมดัลสร้าง/แก้ไขออเดอร์ + แนบรูปสูงสุด MAX_ORDER_IMGS รูป
    ============================================================ */
-let editId=null, mImgs=[], mRemoved=[], tmpStatus=null, mLocked=false;
+let editId=null, mImgs=[], mRemoved=[], tmpStatus=null, mLocked=false, mImgShowAll=false;
+const IMG_PREVIEW_LIMIT=6;   /* แสดงตัวอย่างกี่รูปก่อนกด "ดูทั้งหมด" (กันหน่วงตอนเปิดออเดอร์รูปเยอะ) */
 
 /* ประเภทงานในโมดัล ขึ้นกับหัวข้อที่เลือก */
 function fillModalCatSelect(secId,selected){
@@ -41,7 +42,7 @@ function openOrder(o){
     sc.appendChild(b);
   });
   mImgs=o?(o.images||[]).map(n=>({kind:"existing",name:n})):[];
-  mRemoved=[]; $("mProg").textContent="";
+  mRemoved=[]; mImgShowAll=false; $("mProg").textContent="";
   renderModalImgs();
   showModal(true);
 }
@@ -67,10 +68,14 @@ function updateBuyback(){
 function renderModalImgs(){
   const g=$("imgGrid");g.innerHTML="";
   const n=mImgs.length;
-  mImgs.forEach((im,i)=>{
+  /* รูปเยอะ → แสดงตัวอย่างแค่ IMG_PREVIEW_LIMIT รูปก่อน (กันโหลดรูปเต็มพร้อมกันจนค้าง) */
+  const limited = !mImgShowAll && n>IMG_PREVIEW_LIMIT;
+  const shown = limited ? IMG_PREVIEW_LIMIT : n;
+  for(let i=0;i<shown;i++){
+    const im=mImgs[i];
     const url=im.kind==="new"?im.url:imgUrl(editId,im.name);
     const c=document.createElement("div");c.className="cell"+(i===0?" cover":"");
-    c.innerHTML=`<img src="${url}" alt="">
+    c.innerHTML=`<img src="${url}" alt="" loading="lazy" decoding="async">
       ${i===0?`<span class="cover-tag">ปก</span>`:`<button class="star" type="button" title="ตั้งเป็นรูปแรก">⭐</button>`}
       <button class="x" type="button" title="ลบ">✕</button>
       <div class="ord">
@@ -82,19 +87,29 @@ function renderModalImgs(){
     const st=c.querySelector(".star"); if(st) st.onclick=()=>setCoverImg(i);
     c.querySelectorAll(".mv").forEach(b=>b.onclick=()=>{ if(!b.disabled) moveImg(i,+b.dataset.mv); });
     g.appendChild(c);
-  });
-  if(mImgs.length<MAX_ORDER_IMGS){
+  }
+  if(limited){   /* ปุ่มดูรูปที่เหลือ */
+    const more=document.createElement("div");
+    more.className="add img-more";
+    more.innerHTML=`<span class="im-ic">📷</span><span class="im-tx">ดูรูปทั้งหมด<br>(${n} รูป)</span>`;
+    more.onclick=()=>{ mImgShowAll=true; renderModalImgs(); };
+    g.appendChild(more);
+  }
+  if(n<MAX_ORDER_IMGS){
     const a=document.createElement("div");a.className="add";a.textContent="＋";
     a.onclick=()=>$("oFiles").click();
     g.appendChild(a);
   }
-  $("imgCount").textContent=`${mImgs.length}/${MAX_ORDER_IMGS} รูป`;
+  $("imgCount").textContent = limited
+    ? `แสดง ${shown} จาก ${n}/${MAX_ORDER_IMGS} รูป — กด “ดูรูปทั้งหมด” เพื่อดูที่เหลือ`
+    : `${n}/${MAX_ORDER_IMGS} รูป`;
 }
 function addModalFiles(files){
   for(const f of files){
     if(mImgs.length>=MAX_ORDER_IMGS){toast("แนบได้สูงสุด "+MAX_ORDER_IMGS+" รูป");break;}
     mImgs.push({kind:"new",file:f,url:URL.createObjectURL(f)});
   }
+  mImgShowAll=true;   /* เห็นรูปที่เพิ่งเพิ่มทันที */
   renderModalImgs();
 }
 function removeModalImg(i){
@@ -157,7 +172,7 @@ async function deleteOrder(){
   Log.add("delete_order","ออเดอร์ #"+(o.order_no||"(ไม่มีเลข)"),dparts.join(" · "));
   showModal(false);renderAll();toast("ลบออเดอร์แล้ว");
 }
-function showModal(on){$("modal").classList.toggle("show",on);$("ov").classList.toggle("show",on);if(!on){editId=null;mImgs=[];mRemoved=[];}}
+function showModal(on){$("modal").classList.toggle("show",on);$("ov").classList.toggle("show",on);if(!on){editId=null;mImgs=[];mRemoved=[];mImgShowAll=false;}}
 
 /* ============================================================
    ล็อค / ปลดล็อค / หน้าดูอย่างเดียว (read-only)
