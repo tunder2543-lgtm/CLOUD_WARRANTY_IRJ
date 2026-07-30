@@ -195,15 +195,23 @@ function renderLockImgs(){
   const wrap=$("lockImgWrap"); if(!wrap) return;
   const imgs=lockViewImgs, n=imgs.length, id=lockViewOrderId;
   if(!n){ wrap.innerHTML=`<div class="lv-noimg">— ไม่มีรูป —</div>`; return; }
-  const limited=!lockShowAll && n>IMG_PREVIEW_LIMIT, shown=limited?IMG_PREVIEW_LIMIT:n;
-  let html=`<div class="lv-imgs">`;
-  for(let i=0;i<shown;i++){ const u=imgUrl(id,imgs[i]);
-    html+=`<figure class="lv-cell"><img loading="lazy" decoding="async" src="${u}" data-full="${u}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'iph',textContent:'⚠️'}))"></figure>`;
+  const onerr=`onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'iph',textContent:'⚠️'}))"`;
+  /* รูปแรก = ภาพใหญ่ (เห็นชัด) */
+  const heroU=imgUrl(id,imgs[0]);
+  let html=`<figure class="lv-hero"><img loading="lazy" decoding="async" src="${heroU}" data-full="${heroU}" alt="" ${onerr}></figure>`;
+  /* รูปที่ 2 เป็นต้นไป = ภาพย่อ (จำกัด 6 + ปุ่มดูทั้งหมด) */
+  const rest=imgs.slice(1);
+  if(rest.length){
+    const limited=!lockShowAll && rest.length>IMG_PREVIEW_LIMIT, shown=limited?IMG_PREVIEW_LIMIT:rest.length;
+    html+=`<div class="lv-imgs">`;
+    for(let i=0;i<shown;i++){ const u=imgUrl(id,rest[i]);
+      html+=`<figure class="lv-cell"><img loading="lazy" decoding="async" src="${u}" data-full="${u}" alt="" ${onerr}></figure>`;
+    }
+    html+=`</div>`;
+    if(limited) html+=`<button class="btn ghost lv-more" id="lockMore" type="button">📷 ดูรูปทั้งหมด (${n} รูป)</button>`;
   }
-  html+=`</div>`;
-  if(limited) html+=`<button class="btn ghost lv-more" id="lockMore" type="button">📷 ดูรูปทั้งหมด (${n} รูป)</button>`;
   wrap.innerHTML=html;
-  wrap.querySelectorAll(".lv-cell img").forEach(im=>im.onclick=()=>{$("lbImg").src=im.dataset.full;$("lb").classList.add("open");});
+  wrap.querySelectorAll("img[data-full]").forEach(im=>im.onclick=()=>{$("lbImg").src=im.dataset.full;$("lb").classList.add("open");});
   const mb=$("lockMore"); if(mb) mb.onclick=()=>{ lockShowAll=true; renderLockImgs(); };
 }
 /* ล็อค/ปลดล็อค "ทั้งหมด" ในหัวข้อที่เปิดอยู่ (lock=true → ล็อค, false → ปลดล็อค) */

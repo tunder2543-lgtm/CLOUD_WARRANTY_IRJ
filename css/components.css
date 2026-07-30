@@ -147,6 +147,8 @@
 .lv-imgs-h{font-size:13px;color:var(--ink-soft);font-weight:500;margin-bottom:9px}
 .lv-imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
 .lv-more{width:100%;justify-content:center;margin-top:12px}
+.lv-hero{flex:none;width:100%;margin-bottom:12px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--bg)}
+.lv-hero img{display:block;width:100%;max-height:360px;object-fit:contain;background:var(--bg);cursor:zoom-in}
 /* ===== หน้าดูออเดอร์ที่ล็อค — การ์ดลอยกลางจอ (พื้นหลังเบลอ) เลย์เอาต์แนวนอน 2 ฝั่ง ===== */
 #lockModal{width:min(940px,94vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
 #lockModal>.mhead{flex:none}
