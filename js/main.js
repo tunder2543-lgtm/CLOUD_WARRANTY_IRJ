@@ -10,6 +10,7 @@
   buildCatSwatches();
   wire();
   renderView();
+  if(typeof prefetchElecCounts==="function") prefetchElecCounts();   /* badge เมนูซ้าย = จำนวนกลุ่มใน bucket */
   setInterval(tickCountdowns,1000);   /* นับถอยหลังบัตรแข็งแบบสด ๆ */
 })();
 

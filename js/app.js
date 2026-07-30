@@ -18,7 +18,13 @@ const catsFor=secId=>CATEGORIES.filter(c=>(c.section||"")===(secId||""));
 const orderCount=catId=>DB.orders.filter(o=>o.category===catId).length;
 const allSections=()=>[...FIXED_GROUPS.flatMap(g=>g.sections),...DB.sections];
 const sectionById=id=>allSections().find(s=>s.id===id);
-const sectionCount=id=>DB.orders.filter(o=>o.section===id).length;
+const sectionCount=id=>{
+  /* หัวข้อ elec (Live FB/TikTok/Sell): นับจากจำนวนโฟลเดอร์จริงใน bucket ถ้ารู้แล้ว */
+  if(typeof isElecSection==="function"&&isElecSection(id)&&typeof elecCount==="function"){
+    const c=elecCount(id); if(c!==null&&c!==undefined) return c;
+  }
+  return DB.orders.filter(o=>o.section===id).length;
+};
 function scoped(){
   if(currentSection===null) return DB.orders;
   if(currentSection==="__none") return DB.orders.filter(o=>!o.section);
@@ -139,12 +145,14 @@ function renderHome(){
     if(!g.sections.length){ html+=`<div style="color:var(--muted);font-size:13px;margin-bottom:22px">ยังไม่มีหมวดหมู่ — เพิ่มได้ที่เมนูซ้าย (สูงสุด ${SPECIAL_MAX})</div>`; return; }
     html+=`<div class="scards">`+g.sections.map(s=>{
       const list=DB.orders.filter(o=>o.section===s.id);
-      if(isElecSection(s.id)){   /* คลังกลุ่มรูป: แสดงจำนวนกลุ่ม + จำนวนรูปรวม */
-        const imgs=list.reduce((n,o)=>n+((o.images&&o.images.length)||0),0);
+      if(isElecSection(s.id)){   /* คลังกลุ่มรูป: แสดงจำนวนกลุ่ม + จำนวนรูปรวม (จาก bucket ถ้ารู้แล้ว) */
         const ei=elecInfo(s.id);
+        const st=(typeof elecStat==="function")?elecStat(s.id):null;
+        const gCount=st?st.groups:list.length;
+        const imgs=st?st.images:list.reduce((n,o)=>n+((o.images&&o.images.length)||0),0);
         return `<div class="scard" data-sec="${s.id}">
           <div class="sc-n">${ei?ei.emoji+" ":""}${esc(s.name)}</div>
-          <div class="sc-v num">${list.length}<span>กลุ่ม</span></div>
+          <div class="sc-v num">${gCount}<span>กลุ่ม</span></div>
           <div class="sc-st"><span>🖼️ ${imgs} รูป</span></div></div>`;
       }
       const t=list.filter(o=>o.status==="todo").length,w=list.filter(o=>o.status==="doing").length,

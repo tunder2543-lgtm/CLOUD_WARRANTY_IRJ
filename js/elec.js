@@ -15,9 +15,13 @@ let elecFiles=[];            /* [{file,name,status:'pending'|'done'|'fail',reaso
 let elecUploadGroupId=null;  /* id ที่ใช้ระหว่างการ import ครั้งนี้ */
 let elecZipBusy=false;
 let elecLB=null;             /* lightbox แกลเลอรี: {list,idx,bucket,gid} */
+let elecGroupsCache={};      /* bucket -> group[] ที่อ่านมาจาก Storage (undefined = ยังไม่โหลด) */
+let elecStatCache={};         /* bucket -> {groups,images} สำหรับ badge เมนูซ้าย + การ์ดหน้าแรก (คงอยู่ข้ามการนำทาง) */
+let elecLoading=false;       /* กำลัง list ไฟล์จาก bucket อยู่ */
 
-/* รีเซ็ตการนำทาง (เรียกจาก gotoSection ตอนเปลี่ยนหัวข้อ) */
-function resetElecNav(){ elecGroupId=null; elecSearch=""; elecYear=null; }
+/* รีเซ็ตการนำทาง (เรียกจาก gotoSection ตอนเปลี่ยนหัวข้อ)
+   ล้าง cache ด้วย เพื่อให้ทุกครั้งที่เปิดหัวข้อ = อ่านรายการล่าสุดจาก bucket ใหม่ */
+function resetElecNav(){ elecGroupId=null; elecSearch=""; elecYear=null; elecGroupsCache={}; }
 
 /* กำลังอยู่ในขั้นตอนอัปโหลด (step2) — ห้ามปิดโมดัลด้วยการกดพื้นที่นอก/Esc/X
    ต้องรอเสร็จ หรือกดปุ่ม "ยกเลิก & ลบที่อัปแล้ว" เท่านั้น */
@@ -26,16 +30,154 @@ function elecBusy(){
   return !!(m&&m.classList.contains("show")&&s2&&s2.style.display!=="none");
 }
 
-/* กลุ่มทั้งหมดของหัวข้อ elec ปัจจุบัน (ใหม่→เก่า ตามลำดับใน DB.orders) */
-function elecGroups(secId){ return DB.orders.filter(o=>o.section===secId); }
-function elecGroupById(id){ return DB.orders.find(o=>o.id===id&&isElecSection(o.section)); }
+/* ============================================================
+   แหล่งข้อมูลกลุ่ม = โฟลเดอร์จริงใน Storage bucket (source of truth)
+   ทำให้เว็บนี้เห็นทุกอย่างที่ระบบอื่นอัปขึ้น bucket โดยอัตโนมัติ
+   • 1 โฟลเดอร์บนสุด = 1 กลุ่ม (ชื่อโฟลเดอร์ = group id ที่ใช้ประกอบ URL รูป)
+   • วันที่: ถ้าชื่อโฟลเดอร์เป็นรูปแบบวันที่ (2026-07-30) ใช้เป็นวันที่เลย
+             ถ้าเป็น grp_… (import จากเว็บนี้) ดึงวันที่จากเรคคอร์ดในตาราง
+   • ออฟไลน์ (ไม่ได้ต่อ Supabase) → ถอยไปใช้เรคคอร์ดในตารางเหมือนเดิม
+   ============================================================ */
+function elecGroupsFromDB(secId){ return DB.orders.filter(o=>o.section===secId); }
+
+/* กลุ่มทั้งหมดของหัวข้อ elec ปัจจุบัน (จาก cache ที่อ่าน bucket มา; ยังไม่โหลด → ใช้ตารางไปก่อน) */
+function elecGroups(secId){
+  const ei=elecInfo(secId);
+  const c=ei?elecGroupsCache[ei.bucket]:undefined;
+  return (c!==undefined)?c:elecGroupsFromDB(secId);
+}
+function elecGroupById(id){
+  for(const b in elecGroupsCache){ const g=(elecGroupsCache[b]||[]).find(x=>x.id===id); if(g) return g; }
+  return DB.orders.find(o=>o.id===id&&isElecSection(o.section))||null;
+}
+
+/* list รายการใน path เดียว (แบ่งหน้าเอง กัน limit 100 ของ Storage) */
+async function elecList(bucket,path){
+  const out=[]; const limit=100; let offset=0;
+  for(;;){
+    const {data,error}=await sb.storage.from(bucket).list(path,{limit,offset,sortBy:{column:"name",order:"asc"}});
+    if(error) throw error;
+    if(!data||!data.length) break;
+    out.push(...data);
+    if(data.length<limit) break;
+    offset+=limit;
+  }
+  return out;
+}
+/* วันที่ของกลุ่มจากชื่อโฟลเดอร์ (หรือจากเรคคอร์ดถ้ามี) */
+function elecDateFromFolder(folder,rec){
+  if(/^\d{4}-\d{2}-\d{2}$/.test(folder)) return folder;   /* โฟลเดอร์ชื่อวันที่ */
+  if(rec&&rec.date) return rec.date;                       /* grp_… → ใช้วันที่จากตาราง */
+  return "";
+}
+/* จัดลำดับรูป: ถ้ามีเรคคอร์ด (เคยจัดเรียงเอง) ใช้ลำดับนั้นก่อน แล้วต่อด้วยไฟล์ใหม่ที่ยังไม่มีในเรคคอร์ด */
+function elecOrderImages(files,rec){
+  if(rec&&Array.isArray(rec.images)&&rec.images.length){
+    const set=new Set(files);
+    const ordered=rec.images.filter(n=>set.has(n));
+    const recSet=new Set(rec.images);
+    const extra=files.filter(n=>!recSet.has(n)).sort((a,b)=>a.localeCompare(b));
+    return [...ordered,...extra];
+  }
+  return files.slice().sort((a,b)=>a.localeCompare(b));
+}
+/* อ่านโฟลเดอร์ทั้งหมดใน bucket ของหัวข้อ → สร้างรายการกลุ่ม เก็บลง cache */
+async function loadElecGroups(secId){
+  const ei=elecInfo(secId); if(!ei) return;
+  /* ออฟไลน์ / ไม่มี client → ใช้ตารางแทน (list bucket ไม่ได้) */
+  if(Store.mode!=="supabase"||!sb){ elecGroupsCache[ei.bucket]=elecGroupsFromDB(secId); return; }
+  const bucket=ei.bucket;
+  const top=await elecList(bucket,"");
+  const folders=top.filter(e=>e.id===null&&e.name!==".emptyFolderPlaceholder").map(e=>e.name);
+  const dbById=new Map(DB.orders.filter(o=>o.section===secId).map(o=>[o.id,o]));
+  const groups=[];
+  for(const folder of folders){
+    const entries=await elecList(bucket,folder);
+    const files=entries.filter(e=>e.id!==null&&e.name!==".emptyFolderPlaceholder").map(e=>e.name);
+    if(!files.length) continue;                            /* ข้ามโฟลเดอร์ว่าง/ผี */
+    const rec=dbById.get(folder);
+    groups.push({
+      id:folder, section:secId, date:elecDateFromFolder(folder,rec),
+      images:elecOrderImages(files,rec),
+      order_no:"", customer:"", category:"", status:"", note:"",
+      price:"", wstart:"", wterm:"", locked:!!(rec&&rec.locked),
+      _fromBucket:true,
+    });
+  }
+  groups.sort((a,b)=> a.date<b.date?1 : a.date>b.date?-1 : 0);   /* ใหม่→เก่า */
+  elecGroupsCache[bucket]=groups;
+  elecStatCache[bucket]={groups:groups.length, images:groups.reduce((n,g)=>n+g.images.length,0)};
+}
+
+/* สถิติของหัวข้อ elec (null = ยังไม่รู้ → ใช้ค่าจากตารางไปก่อน) */
+function elecStat(secId){ const ei=elecInfo(secId); return ei?(elecStatCache[ei.bucket]||null):null; }
+/* จำนวนกลุ่มของหัวข้อ elec สำหรับ badge เมนูซ้าย */
+function elecCount(secId){ const s=elecStat(secId); return s?s.groups:null; }
+
+/* โหลดสถิติ (จำนวนกลุ่ม+รูป) ของทั้ง 3 คลังตอนเปิดแอป แล้วรีเฟรชหน้าจอ
+   ต้อง list ไฟล์ในแต่ละโฟลเดอร์เพื่อรู้จำนวนรูป (Storage ไม่มีตัวนับสำเร็จรูป) — รันเบื้องหลัง ไม่บล็อค UI */
+async function prefetchElecCounts(){
+  if(Store.mode!=="supabase"||!sb) return;
+  await Promise.all(Object.values(ELEC_SECTIONS).map(async ei=>{
+    try{
+      const top=await elecList(ei.bucket,"");
+      const folders=top.filter(e=>e.id===null&&e.name!==".emptyFolderPlaceholder").map(e=>e.name);
+      let groups=0, images=0;
+      for(const f of folders){
+        const entries=await elecList(ei.bucket,f);
+        const n=entries.filter(e=>e.id!==null&&e.name!==".emptyFolderPlaceholder").length;
+        if(n>0){ groups++; images+=n; }              /* ข้ามโฟลเดอร์ว่าง/ผี */
+      }
+      elecStatCache[ei.bucket]={groups,images};
+    }catch(e){ /* list ไม่ได้ → คงค่าจากตารางไว้ */ }
+  }));
+  if(typeof renderNav==="function") renderNav();                            /* badge เมนูซ้าย */
+  if(currentSection===null && typeof renderHome==="function") renderHome(); /* การ์ดหน้าแรก */
+}
+/* โหลดแบบ async แล้ว render (แสดงสถานะกำลังโหลดระหว่างรอ) */
+async function loadAndRenderElec(secId){
+  const ei=elecInfo(secId); if(!ei) return;
+  elecLoading=true; renderElecLoading(ei);
+  let err="";
+  try{ await loadElecGroups(secId); }
+  catch(e){ err=(e&&e.message)||String(e); console.warn("[elec] load bucket:",err); }
+  elecLoading=false;
+  if(currentSection!==secId) return;                       /* ผู้ใช้เปลี่ยนหัวข้อไปแล้ว */
+  if(err){ elecGroupsCache[ei.bucket]=elecGroupsFromDB(secId); toast("อ่านจากคลังไม่สำเร็จ ใช้ข้อมูลในตารางแทน"); }
+  if(typeof renderNav==="function") renderNav();   /* อัปเดต badge เมนูซ้ายให้ตรงจำนวนกลุ่มจริง */
+  renderElecView();
+}
+/* รีเฟรช: ล้าง cache ของ bucket นี้แล้วอ่านใหม่ */
+function refreshElec(){
+  const ei=elecInfo(currentSection); if(!ei) return;
+  delete elecGroupsCache[ei.bucket]; elecGroupId=null;
+  renderElecView();
+}
 
 /* ============================================================
    หน้าคลัง (list) / หน้ารายละเอียดกลุ่ม (detail)
    ============================================================ */
 function renderElecView(){
+  const ei=elecInfo(currentSection); if(!ei) return;
+  /* ยังไม่ได้อ่าน bucket นี้ → โหลดก่อน (แสดงสถานะกำลังโหลด) */
+  if(elecGroupsCache[ei.bucket]===undefined){
+    if(elecLoading) renderElecLoading(ei); else loadAndRenderElec(currentSection);
+    return;
+  }
   const g=elecGroupId?elecGroupById(elecGroupId):null;
   if(g) renderElecDetail(g); else renderElecList();
+}
+
+/* สถานะระหว่างอ่านรายการไฟล์จาก Storage */
+function renderElecLoading(ei){
+  const wrap=$("elecView"); if(!wrap) return;
+  wrap.innerHTML=`<div class="elec-bar-top">
+    <div class="elec-store">${ei?ei.emoji:""} คลัง <b>${esc(ei?ei.label:"")}</b>
+      <span class="elec-store-sub">กำลังอ่านรายการรูปจากคลัง…</span></div>
+  </div>
+  <div class="elec-empty"><div class="elec-empty-ic">⏳</div>
+    <div class="elec-empty-h">กำลังโหลดจากคลัง ${esc(ei?ei.label:"")}…</div>
+    <div class="elec-empty-s">ดึงรายการไฟล์จาก Supabase Storage โดยตรง</div></div>`;
 }
 
 function renderElecList(){
@@ -46,6 +188,7 @@ function renderElecList(){
   let html=`<div class="elec-bar-top">
     <div class="elec-store">${ei?ei.emoji:""} คลัง <b>${esc(ei?ei.label:sec)}</b>
       <span class="elec-store-sub">${groups.length} กลุ่ม · ${totalImg} รูป · bucket <code>${esc(ei?ei.bucket:sec)}</code></span></div>
+    <button class="btn ghost" id="elecRefresh" title="อ่านรายการรูปล่าสุดจากคลังใหม่">🔄 รีเฟรชจากคลัง</button>
   </div>`;
   if(!groups.length){
     html+=`<div class="elec-empty">
@@ -101,6 +244,7 @@ function renderElecList(){
     }).join("");
   }
   wrap.innerHTML=html;
+  { const rb=$("elecRefresh"); if(rb) rb.onclick=refreshElec; }
   wrap.querySelectorAll(".eyear-chip").forEach(c=>c.onclick=()=>{ elecYear=c.dataset.year; renderElecList(); window.scrollTo({top:0,behavior:"smooth"}); });
   wrap.querySelectorAll(".emonth-head").forEach(h=>h.onclick=()=>h.closest(".emonth").classList.toggle("collapsed"));
   wrap.querySelectorAll(".gcard").forEach(el=>el.onclick=e=>{
@@ -318,6 +462,7 @@ async function elecFinalize(){
   $("elecBarFill").style.width="100%"; $("elecBarPct").textContent="100%";
   await Store.saveOrder(o);
   Log.add("create_order","คลัง "+ei.label+" · กลุ่ม "+(beDateLabel(o.date)||"—"),"นำเข้า "+o.images.length+" รูป");
+  if(ei) delete elecGroupsCache[ei.bucket];   /* ให้ re-list จาก bucket เห็นกลุ่มใหม่ */
   showElecModal(false);
   renderView();
   toast(`นำเข้าสำเร็จ ${o.images.length} รูป เข้ากลุ่ม ${beDateLabel(o.date)||""}`);
@@ -335,6 +480,7 @@ async function deleteElecGroup(o){
   await Store.deleteOrder({id:o.id, images:[]});   /* ลบเฉพาะเรคคอร์ด (รูปลบจาก bucket แล้ว) */
   Log.add("delete_order","คลัง "+(ei?ei.label:o.section)+" · กลุ่ม "+(label||"—"),"ลบ "+cnt+" รูป");
   if(elecGroupId===o.id) elecGroupId=null;
+  if(ei) delete elecGroupsCache[ei.bucket];   /* ให้ re-list จาก bucket สะท้อนการลบ */
   renderView();
   toast("ลบกลุ่มแล้ว");
 }
