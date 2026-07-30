@@ -36,9 +36,11 @@ function renderAll(){ renderView(); }
 /* ===== sidebar nav ===== */
 function sbItem(s,special){
   const n=sectionCount(s.id);
+  const newN=(typeof isElecSection==="function"&&isElecSection(s.id)&&typeof elecNewCount==="function")?elecNewCount(s.id):0;
   return `<div class="sb-item ${currentSection===s.id?"on":""}" data-sec="${s.id}">
     <span class="sb-nm"><span>${esc(s.name)}</span>${s.desc?`<span class="sb-desc">${esc(s.desc)}</span>`:""}</span>
     ${special?`<button class="sb-del" data-id="${s.id}" title="ลบ">🗑</button>`:""}
+    ${newN>0?`<span class="sb-new" title="มีไฟล์ใหม่ที่ยังไม่ได้ดู">New +${newN}</span>`:""}
     <span class="sb-badge num">${n}</span></div>`;
 }
 function renderNav(){

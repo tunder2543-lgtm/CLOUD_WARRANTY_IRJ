@@ -17,7 +17,9 @@ let elecZipBusy=false;
 let elecLB=null;             /* lightbox แกลเลอรี: {list,idx,bucket,gid} */
 let elecGroupsCache={};      /* bucket -> group[] ที่อ่านมาจาก Storage (undefined = ยังไม่โหลด) */
 let elecStatCache={};         /* bucket -> {groups,images} สำหรับ badge เมนูซ้าย + การ์ดหน้าแรก (คงอยู่ข้ามการนำทาง) */
+let elecFolderCountCache={};  /* bucket -> {folder:count} ล่าสุดจาก bucket (ใช้คำนวณป้าย New) */
 let elecLoading=false;       /* กำลัง list ไฟล์จาก bucket อยู่ */
+const ELEC_SEEN_KEY=KEY+"_elec_seen";  /* localStorage: {bucket:{folder:count}} ที่ผู้ใช้ดูแล้ว */
 
 /* รีเซ็ตการนำทาง (เรียกจาก gotoSection ตอนเปลี่ยนหัวข้อ)
    ล้าง cache ด้วย เพื่อให้ทุกครั้งที่เปิดหัวข้อ = อ่านรายการล่าสุดจาก bucket ใหม่ */
@@ -107,6 +109,31 @@ async function loadElecGroups(secId){
   groups.sort((a,b)=> a.date<b.date?1 : a.date>b.date?-1 : 0);   /* ใหม่→เก่า */
   elecGroupsCache[bucket]=groups;
   elecStatCache[bucket]={groups:groups.length, images:groups.reduce((n,g)=>n+g.images.length,0)};
+  const fc={}; groups.forEach(g=>{ fc[g.id]=g.images.length; }); elecFolderCountCache[bucket]=fc;
+}
+
+/* ===== ป้าย "New +N" — ไฟล์ใหม่ที่ยังไม่ได้ดู (เก็บสถานะ seen ต่อเบราว์เซอร์) ===== */
+function elecLoadSeen(){ try{ return JSON.parse(localStorage.getItem(ELEC_SEEN_KEY))||{}; }catch(e){ return {}; } }
+function elecSaveSeen(o){ try{ localStorage.setItem(ELEC_SEEN_KEY,JSON.stringify(o)); }catch(e){} }
+/* จำนวนไฟล์ใหม่ของหัวข้อ = ผลรวม max(0, ปัจจุบัน − ที่ดูแล้ว) ทุกโฟลเดอร์ (0 = ไม่มี/ยังไม่ได้ list) */
+function elecNewCount(secId){
+  const ei=elecInfo(secId); if(!ei) return 0;
+  const cur=elecFolderCountCache[ei.bucket]; if(!cur) return 0;
+  const seen=elecLoadSeen()[ei.bucket]||{};
+  let n=0; for(const f in cur){ n+=Math.max(0,(cur[f]|0)-(seen[f]|0)); }
+  return n;
+}
+/* ทำเครื่องหมายว่าดูหัวข้อนี้แล้ว (บันทึกจำนวนไฟล์ปัจจุบันเป็น seen) */
+function elecMarkSeen(secId){
+  const ei=elecInfo(secId); const cur=ei?elecFolderCountCache[ei.bucket]:null; if(!cur) return;
+  const all=elecLoadSeen(); all[ei.bucket]={...cur}; elecSaveSeen(all);
+}
+/* ครั้งแรกสุด (ยังไม่มีคีย์ seen เลย) → ตั้งต้น = เห็นทุกอย่างแล้ว ไม่ให้ New ค้างตั้งแต่วันแรก */
+function elecSeedSeenIfEmpty(){
+  try{ if(localStorage.getItem(ELEC_SEEN_KEY)!==null) return; }catch(e){ return; }
+  const all={};
+  Object.values(ELEC_SECTIONS).forEach(ei=>{ if(elecFolderCountCache[ei.bucket]) all[ei.bucket]={...elecFolderCountCache[ei.bucket]}; });
+  elecSaveSeen(all);
 }
 
 /* สถิติของหัวข้อ elec (null = ยังไม่รู้ → ใช้ค่าจากตารางไปก่อน) */
@@ -122,16 +149,18 @@ async function prefetchElecCounts(){
     try{
       const top=await elecList(ei.bucket,"");
       const folders=top.filter(e=>e.id===null&&e.name!==".emptyFolderPlaceholder").map(e=>e.name);
-      let groups=0, images=0;
+      let groups=0, images=0; const fc={};
       for(const f of folders){
         const entries=await elecList(ei.bucket,f);
         const n=entries.filter(e=>e.id!==null&&e.name!==".emptyFolderPlaceholder").length;
-        if(n>0){ groups++; images+=n; }              /* ข้ามโฟลเดอร์ว่าง/ผี */
+        if(n>0){ groups++; images+=n; fc[f]=n; }     /* ข้ามโฟลเดอร์ว่าง/ผี */
       }
       elecStatCache[ei.bucket]={groups,images};
+      elecFolderCountCache[ei.bucket]=fc;
     }catch(e){ /* list ไม่ได้ → คงค่าจากตารางไว้ */ }
   }));
-  if(typeof renderNav==="function") renderNav();                            /* badge เมนูซ้าย */
+  elecSeedSeenIfEmpty();                                                    /* ครั้งแรก: กัน New ค้าง */
+  if(typeof renderNav==="function") renderNav();                            /* badge + ป้าย New เมนูซ้าย */
   if(currentSection===null && typeof renderHome==="function") renderHome(); /* การ์ดหน้าแรก */
 }
 /* โหลดแบบ async แล้ว render (แสดงสถานะกำลังโหลดระหว่างรอ) */
@@ -144,7 +173,8 @@ async function loadAndRenderElec(secId){
   elecLoading=false;
   if(currentSection!==secId) return;                       /* ผู้ใช้เปลี่ยนหัวข้อไปแล้ว */
   if(err){ elecGroupsCache[ei.bucket]=elecGroupsFromDB(secId); toast("อ่านจากคลังไม่สำเร็จ ใช้ข้อมูลในตารางแทน"); }
-  if(typeof renderNav==="function") renderNav();   /* อัปเดต badge เมนูซ้ายให้ตรงจำนวนกลุ่มจริง */
+  else elecMarkSeen(secId);                          /* เปิดดูหัวข้อนี้แล้ว → ล้างป้าย New */
+  if(typeof renderNav==="function") renderNav();   /* อัปเดต badge + ป้าย New เมนูซ้าย */
   renderElecView();
 }
 /* รีเฟรช: ล้าง cache ของ bucket นี้แล้วอ่านใหม่ */
