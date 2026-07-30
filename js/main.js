@@ -57,6 +57,11 @@ function wire(){
   $("btnExport").onclick=exportJSON; $("btnImport").onclick=()=>$("importFile").click();
   $("importFile").onchange=e=>{if(e.target.files[0])importJSON(e.target.files[0]);};
   $("btnCompressImgs").onclick=migrateCompressImages;
+  /* เมนู ล็อค/ปลดล็อคทั้งหมด */
+  $("bulkLockBtn").onclick=e=>{ e.stopPropagation(); $("bulkLockMenu").classList.toggle("show"); };
+  $("bulkLockAll").onclick=()=>{ $("bulkLockMenu").classList.remove("show"); bulkSetLock(true); };
+  $("bulkUnlockAll").onclick=()=>{ $("bulkLockMenu").classList.remove("show"); bulkSetLock(false); };
+  document.addEventListener("click",()=>{ const m=$("bulkLockMenu"); if(m) m.classList.remove("show"); });
   /* popup ยืนยัน / รหัสผ่าน */
   $("pwConfirm").onclick=pwSubmit;
   $("pwCancel").onclick=pwCancel;

@@ -206,6 +206,24 @@ function renderLockImgs(){
   wrap.querySelectorAll(".lv-cell img").forEach(im=>im.onclick=()=>{$("lbImg").src=im.dataset.full;$("lb").classList.add("open");});
   const mb=$("lockMore"); if(mb) mb.onclick=()=>{ lockShowAll=true; renderLockImgs(); };
 }
+/* ล็อค/ปลดล็อค "ทั้งหมด" ในหัวข้อที่เปิดอยู่ (lock=true → ล็อค, false → ปลดล็อค) */
+async function bulkSetLock(lock){
+  const list=(typeof scoped==="function"?scoped():DB.orders).filter(o=>!isElecSection(o.section));
+  if(!list.length){ await askAlert({title:"ไม่มีออเดอร์",message:"หัวข้อนี้ยังไม่มีออเดอร์ให้ทำรายการ",icon:"ℹ️"}); return; }
+  const targets=list.filter(o=>(!!o.locked)!==lock);   /* เฉพาะที่สถานะต่างจากที่จะตั้ง */
+  if(!targets.length){ await askAlert({title:lock?"ล็อคครบแล้ว":"ปลดล็อคครบแล้ว",message:lock?"ทุกออเดอร์ในหัวข้อนี้ถูกล็อคอยู่แล้ว":"ทุกออเดอร์ในหัวข้อนี้ปลดล็อคอยู่แล้ว",icon:"ℹ️"}); return; }
+  if(lock){
+    const ok=await askConfirm({title:"ล็อคทั้งหมด?",message:`ล็อค ${targets.length} ออเดอร์ในหัวข้อนี้ — จะเปิดดูได้อย่างเดียว ต้องใส่รหัสผ่านเพื่อกลับมาแก้ไข`,icon:"🔒",confirmText:`🔒 ล็อค ${targets.length} รายการ`});
+    if(!ok) return;
+  }else{
+    const ok=await askPassword({title:"ปลดล็อคทั้งหมด?",message:`ปลดล็อค ${targets.length} ออเดอร์ในหัวข้อนี้`,icon:"🔓",confirmText:`🔓 ปลดล็อค ${targets.length} รายการ`,expect:UNLOCK_PASSWORD});
+    if(!ok) return;
+  }
+  targets.forEach(o=>o.locked=lock);
+  await Store.saveOrdersBulk(targets);
+  Log.add("edit_order",(lock?"ล็อค":"ปลดล็อค")+"ทั้งหมด",(lock?"ล็อค ":"ปลดล็อค ")+targets.length+" ออเดอร์ในหัวข้อ");
+  renderAll(); toast((lock?"🔒 ล็อค":"🔓 ปลดล็อค")+" "+targets.length+" ออเดอร์แล้ว");
+}
 /* ล็อค/ปลดล็อคจากปุ่มบนการ์ด (ไม่ต้องเปิดโมดัล) */
 async function toggleLockOrder(o){
   if(!o) return;
