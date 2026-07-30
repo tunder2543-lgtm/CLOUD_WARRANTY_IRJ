@@ -10,9 +10,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<link rel="stylesheet" href="css/base.css?v=32">
-<link rel="stylesheet" href="css/layout.css?v=32">
-<link rel="stylesheet" href="css/components.css?v=32">
+<link rel="stylesheet" href="css/base.css?v=33">
+<link rel="stylesheet" href="css/layout.css?v=33">
+<link rel="stylesheet" href="css/components.css?v=33">
 </head>
 <body>
 <div class="shell">
@@ -148,6 +148,22 @@
     <div class="mactions">
       <button class="btn ghost" id="lockCloseBtn">ปิด</button>
       <button class="btn primary" id="lockUnlock">🔓 ปลดล็อค (ใส่รหัส)</button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup ใส่รหัสผ่าน (ลบกลุ่ม / ปลดล็อค) -->
+<div class="ov pw-ov" id="pwOv"></div>
+<div class="modal pw-modal" id="pwModal">
+  <div class="pw-body">
+    <div class="pw-icon" id="pwIcon">🔒</div>
+    <h2 class="pw-title" id="pwTitle">ใส่รหัสผ่าน</h2>
+    <p class="pw-msg" id="pwMsg"></p>
+    <input class="pw-input" id="pwInput" type="password" inputmode="numeric" autocomplete="off" placeholder="• • • •">
+    <div class="pw-err" id="pwErr"></div>
+    <div class="pw-actions">
+      <button class="btn ghost" id="pwCancel" type="button">ยกเลิก</button>
+      <button class="btn primary" id="pwConfirm" type="button">ยืนยัน</button>
     </div>
   </div>
 </div>
@@ -290,16 +306,16 @@
 </div>
 
 <!-- สคริปต์ (เรียงลำดับสำคัญ: config → helpers → store → log → app → orders → settings → main) -->
-<script src="js/config.js?v=32"></script>
-<script src="js/helpers.js?v=32"></script>
-<script src="js/datepicker.js?v=32"></script>
-<script src="js/store.js?v=32"></script>
-<script src="js/log.js?v=32"></script>
-<script src="js/app.js?v=32"></script>
-<script src="js/orders.js?v=32"></script>
-<script src="js/elec.js?v=32"></script>
-<script src="js/settings.js?v=32"></script>
-<script src="js/import-excel.js?v=32"></script>
-<script src="js/main.js?v=32"></script>
+<script src="js/config.js?v=33"></script>
+<script src="js/helpers.js?v=33"></script>
+<script src="js/datepicker.js?v=33"></script>
+<script src="js/store.js?v=33"></script>
+<script src="js/log.js?v=33"></script>
+<script src="js/app.js?v=33"></script>
+<script src="js/orders.js?v=33"></script>
+<script src="js/elec.js?v=33"></script>
+<script src="js/settings.js?v=33"></script>
+<script src="js/import-excel.js?v=33"></script>
+<script src="js/main.js?v=33"></script>
 </body>
 </html>

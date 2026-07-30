@@ -57,6 +57,14 @@ function wire(){
   $("btnExport").onclick=exportJSON; $("btnImport").onclick=()=>$("importFile").click();
   $("importFile").onchange=e=>{if(e.target.files[0])importJSON(e.target.files[0]);};
   $("btnCompressImgs").onclick=migrateCompressImages;
+  /* popup รหัสผ่าน */
+  $("pwConfirm").onclick=pwSubmit;
+  $("pwCancel").onclick=pwCancel;
+  $("pwOv").onclick=pwCancel;
+  $("pwInput").addEventListener("keydown",e=>{
+    if(e.key==="Enter"){ e.preventDefault(); pwSubmit(); }
+    else if(e.key==="Escape"){ e.preventDefault(); pwCancel(); }
+  });
   /* โมดัลนำเข้ารูปเข้าคลัง (ประกันอิเล็คทรอนิค) */
   $("elecClose").onclick=()=>{ if(elecBusy()){ toast("กำลังอัปโหลด… รอให้เสร็จ หรือกด “ยกเลิก & ลบที่อัปแล้ว”"); return; } showElecModal(false); };
   $("elecOv").onclick=()=>{};   /* กดพื้นหลังไม่ปิด — ต้องกด ✕ (ระหว่างอัปโหลด ✕ ก็ถูกล็อกไว้) */

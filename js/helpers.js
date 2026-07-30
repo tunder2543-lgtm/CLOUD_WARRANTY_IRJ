@@ -129,3 +129,41 @@ async function compressImageFile(file){
     return new File([b],file.name,{type:b.type,lastModified:file.lastModified});
   }catch(e){ return file; }
 }
+
+/* ===== Popup ใส่รหัสผ่าน (แทน prompt เดิม) — คืน Promise<boolean> =====
+   askPassword({title,message,icon,confirmText,danger,expect})
+   • ใส่ถูก → resolve(true) · ยกเลิก/Esc → resolve(false) · ใส่ผิด → แจ้งในตัว ให้ลองใหม่ */
+let _pwResolve=null, _pwExpect=null;
+function askPassword(opts={}){
+  return new Promise(resolve=>{
+    _pwResolve=resolve;
+    _pwExpect=(opts.expect!=null)?String(opts.expect):null;
+    $("pwTitle").textContent=opts.title||"ใส่รหัสผ่าน";
+    $("pwMsg").textContent=opts.message||"";
+    $("pwIcon").textContent=opts.icon||"🔒";
+    $("pwConfirm").textContent=opts.confirmText||"ยืนยัน";
+    $("pwModal").classList.toggle("danger",!!opts.danger);
+    $("pwErr").textContent=""; $("pwErr").classList.remove("show");
+    $("pwModal").classList.remove("shake");
+    const inp=$("pwInput"); inp.value="";
+    $("pwOv").classList.add("show"); $("pwModal").classList.add("show");
+    setTimeout(()=>inp.focus(),60);
+  });
+}
+function pwSubmit(){
+  const inp=$("pwInput"), val=inp.value.trim();
+  if(_pwExpect!=null && val!==_pwExpect){
+    const e=$("pwErr"); e.textContent="รหัสผ่านไม่ถูกต้อง ลองอีกครั้ง"; e.classList.add("show");
+    const m=$("pwModal"); m.classList.remove("shake"); void m.offsetWidth; m.classList.add("shake");
+    inp.value=""; inp.focus();
+    return;
+  }
+  pwCloseModal(true, val);
+}
+function pwCloseModal(ok,val){
+  $("pwModal").classList.remove("show","shake"); $("pwOv").classList.remove("show");
+  const r=_pwResolve; _pwResolve=null;
+  if(r) r(_pwExpect!=null ? !!ok : (ok?val:null));
+}
+function pwCancel(){ pwCloseModal(false,null); }
+function pwActive(){ return $("pwModal") && $("pwModal").classList.contains("show"); }

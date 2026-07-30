@@ -504,9 +504,10 @@ async function elecFinalize(){
 async function deleteElecGroup(o){
   const ei=elecInfo(o.section);
   const label=beDateLabel(o.date), cnt=(o.images&&o.images.length)||0;
-  const pass=prompt(`ยืนยันการลบกลุ่ม "${label}" (${cnt} รูป)\nพิมพ์รหัสผ่านเพื่อยืนยัน:`);
-  if(pass===null) return;
-  if(pass.trim()!==DEL_GROUP_PASSWORD){ toast("รหัสผ่านไม่ถูกต้อง"); return; }
+  const ok=await askPassword({title:"ลบกลุ่มรูป",
+    message:`ลบกลุ่ม "${label||"—"}" (${cnt} รูป) ถาวร?\nใส่รหัสผ่านเพื่อยืนยัน`,
+    icon:"🗑",confirmText:"ลบกลุ่ม",danger:true,expect:DEL_GROUP_PASSWORD});
+  if(!ok) return;
   const paths=(o.images||[]).map(n=>o.id+"/"+n);
   if(ei) await Store.removeFromBucket(ei.bucket, paths);
   await Store.deleteOrder({id:o.id, images:[]});   /* ลบเฉพาะเรคคอร์ด (รูปลบจาก bucket แล้ว) */

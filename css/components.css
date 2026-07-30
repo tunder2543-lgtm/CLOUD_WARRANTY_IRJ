@@ -34,6 +34,33 @@
 .imgpick .img-more .im-ic{font-size:20px}
 .imgpick .img-more .im-tx{font-weight:600}
 .imgpick .img-more:hover{background:var(--sage);color:#fff}
+
+/* ===== Popup ใส่รหัสผ่าน (ลบกลุ่ม / ปลดล็อค) ===== */
+#pwOv{z-index:60}
+.pw-modal{width:min(380px,92vw);z-index:65}
+.pw-modal .pw-body{padding:30px 28px 24px;text-align:center}
+.pw-icon{width:64px;height:64px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;
+  font-size:30px;background:#e9f3ef;color:var(--sage);box-shadow:0 8px 18px -8px rgba(124,181,160,.75)}
+.pw-title{font-size:19px;font-weight:600;margin-bottom:6px}
+.pw-msg{font-size:13.5px;color:var(--ink-soft);white-space:pre-line;line-height:1.55;margin-bottom:18px}
+.pw-msg:empty{display:none}
+.pw-input{width:100%;text-align:center;font-family:var(--round);font-size:24px;font-weight:600;letter-spacing:.45em;
+  padding:12px 14px 12px 20px;border:2px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);
+  outline:none;transition:border-color .2s,background .2s}
+.pw-input::placeholder{letter-spacing:.3em;color:var(--muted);font-size:20px}
+.pw-input:focus{border-color:var(--sage);background:#fff}
+.pw-err{min-height:18px;font-size:12.5px;color:#d9534f;font-weight:500;margin-top:8px;opacity:0;transition:opacity .15s}
+.pw-err.show{opacity:1}
+.pw-actions{display:flex;gap:10px;margin-top:16px}
+.pw-actions .btn{flex:1;justify-content:center}
+.pw-modal.danger .pw-icon{background:#fdecea;color:#d9534f;box-shadow:0 8px 18px -8px rgba(217,83,79,.6)}
+.pw-modal.danger .pw-input:focus{border-color:#d9534f}
+.pw-modal.danger #pwConfirm{background:#d9534f;color:#fff}
+.pw-modal.danger #pwConfirm:hover{background:#c9463f}
+@keyframes pwShake{0%,100%{transform:translate(-50%,-50%)}
+  20%{transform:translate(calc(-50% - 8px),-50%)}40%{transform:translate(calc(-50% + 8px),-50%)}
+  60%{transform:translate(calc(-50% - 6px),-50%)}80%{transform:translate(calc(-50% + 6px),-50%)}}
+.pw-modal.show.shake{animation:pwShake .4s}
 .imgcount{font-size:12px;color:var(--muted);margin-top:9px}
 /* กล่องประกันบัตรแข็งในโมดัล */
 .card-box{border:1.5px solid var(--card-c,#e0b34e);background:var(--card-tint,#fbf3e0);border-radius:16px;padding:14px 15px;margin-bottom:15px}

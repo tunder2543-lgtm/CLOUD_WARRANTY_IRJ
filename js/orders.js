@@ -213,9 +213,9 @@ function openLockView(o){
 }
 function closeLockView(){ $("lockModal").classList.remove("show"); $("lockOv").classList.remove("show"); }
 async function unlockOrder(o){
-  const pass=prompt("ใส่รหัสผ่านเพื่อปลดล็อคและกลับมาแก้ไข:");
-  if(pass===null)return;
-  if(pass.trim()!==UNLOCK_PASSWORD){ toast("รหัสผ่านไม่ถูกต้อง"); return; }
+  const ok=await askPassword({title:"ปลดล็อคออเดอร์",message:"ใส่รหัสผ่านเพื่อกลับมาแก้ไขออเดอร์นี้",
+    icon:"🔓",confirmText:"🔓 ปลดล็อค",expect:UNLOCK_PASSWORD});
+  if(!ok)return;
   o.locked=false;
   await Store.saveOrder(o);
   Log.add("edit_order","ออเดอร์ #"+(o.order_no||"(ไม่มีเลข)"),"ปลดล็อคออเดอร์");
