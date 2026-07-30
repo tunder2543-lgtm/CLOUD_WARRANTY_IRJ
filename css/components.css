@@ -128,6 +128,14 @@
 .lv-v{font-size:14.5px;font-weight:600;color:var(--ink);text-align:right}
 .lv-imgs-h{font-size:13px;color:var(--ink-soft);font-weight:500;margin-bottom:9px}
 .lv-imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+.lv-more{width:100%;justify-content:center;margin-top:12px}
+/* ===== โมดัลเต็มจอ (หน้าดูออเดอร์ที่ล็อค) ===== */
+.modal-full{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;left:0;top:0;
+  transform:translateY(16px);border-radius:0;display:flex;flex-direction:column}
+.modal-full.show{transform:none}
+.modal-full>.mhead{width:100%;max-width:1000px;margin:0 auto;padding-top:20px}
+.modal-full>.form{flex:1;min-height:0;overflow-y:auto;width:100%;max-width:1000px;margin:0 auto}
+.modal-full .lv-imgs{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
 .lv-cell{border-radius:12px;overflow:hidden;aspect-ratio:1;border:1px solid var(--line);background:var(--bg)}
 .lv-cell img{width:100%;height:100%;object-fit:cover;cursor:zoom-in;display:block}
 .lv-cell .iph{width:100%;height:100%;display:grid;place-items:center;color:var(--muted);font-size:20px}

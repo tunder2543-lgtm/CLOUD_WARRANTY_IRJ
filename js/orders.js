@@ -3,6 +3,7 @@
    ============================================================ */
 let editId=null, mImgs=[], mRemoved=[], tmpStatus=null, mLocked=false, mImgShowAll=false;
 const IMG_PREVIEW_LIMIT=6;   /* แสดงตัวอย่างกี่รูปก่อนกด "ดูทั้งหมด" (กันหน่วงตอนเปิดออเดอร์รูปเยอะ) */
+let lockViewImgs=[], lockViewOrderId=null, lockShowAll=false;   /* หน้าดูอย่างเดียว (locked) */
 
 /* ประเภทงานในโมดัล ขึ้นกับหัวข้อที่เลือก */
 function fillModalCatSelect(secId,selected){
@@ -163,7 +164,10 @@ async function saveOrder(){
 async function deleteOrder(){
   if(!editId)return;
   const o=DB.orders.find(x=>x.id===editId);if(!o)return;
-  if(!confirm(`ลบออเดอร์ ${o.order_no?"#"+o.order_no:""} และรูปทั้งหมด?`))return;
+  const ok=await askConfirm({title:"ลบออเดอร์นี้?",
+    message:`ลบออเดอร์ ${o.order_no?"#"+o.order_no:""} และรูปทั้งหมดถาวร?`,
+    icon:"🗑",confirmText:"ลบออเดอร์",danger:true});
+  if(!ok)return;
   await Store.deleteOrder(o);
   const secNm=o.section?((sectionById(o.section)||{}).name||""):"";
   const dparts=[];
@@ -178,10 +182,29 @@ function showModal(on){$("modal").classList.toggle("show",on);$("ov").classList.
    ล็อค / ปลดล็อค / หน้าดูอย่างเดียว (read-only)
    ============================================================ */
 async function lockCurrentOrder(){
-  if(!confirm("ล็อคออเดอร์นี้?\nหลังล็อคจะเปิดดูได้อย่างเดียว — ต้องใส่รหัสผ่านเพื่อกลับมาแก้ไข"))return;
+  const ok=await askConfirm({title:"ล็อคออเดอร์นี้?",
+    message:"หลังล็อคจะเปิดดูได้อย่างเดียว — ต้องใส่รหัสผ่านเพื่อกลับมาแก้ไข",
+    icon:"🔒",confirmText:"🔒 ล็อค"});
+  if(!ok)return;
   mLocked=true;
   await saveOrder();
   toast("🔒 ล็อคออเดอร์แล้ว");
+}
+/* render ส่วนรูปในหน้า locked — โชว์ 6 รูปก่อน + ปุ่ม "ดูรูปทั้งหมด" (กันหน่วงตอนรูปเยอะ) */
+function renderLockImgs(){
+  const wrap=$("lockImgWrap"); if(!wrap) return;
+  const imgs=lockViewImgs, n=imgs.length, id=lockViewOrderId;
+  if(!n){ wrap.innerHTML=`<div class="lv-noimg">— ไม่มีรูป —</div>`; return; }
+  const limited=!lockShowAll && n>IMG_PREVIEW_LIMIT, shown=limited?IMG_PREVIEW_LIMIT:n;
+  let html=`<div class="lv-imgs">`;
+  for(let i=0;i<shown;i++){ const u=imgUrl(id,imgs[i]);
+    html+=`<figure class="lv-cell"><img loading="lazy" decoding="async" src="${u}" data-full="${u}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'iph',textContent:'⚠️'}))"></figure>`;
+  }
+  html+=`</div>`;
+  if(limited) html+=`<button class="btn ghost lv-more" id="lockMore" type="button">📷 ดูรูปทั้งหมด (${n} รูป)</button>`;
+  wrap.innerHTML=html;
+  wrap.querySelectorAll(".lv-cell img").forEach(im=>im.onclick=()=>{$("lbImg").src=im.dataset.full;$("lb").classList.add("open");});
+  const mb=$("lockMore"); if(mb) mb.onclick=()=>{ lockShowAll=true; renderLockImgs(); };
 }
 function openLockView(o){
   const plan=cardPlan(o.section), cd=plan?fmtCountdown(o):null;
@@ -196,18 +219,15 @@ function openLockView(o){
     rows.push([`💵 ราคารับซื้อคืน ${Math.round(plan.rate*100)}%`, "฿"+fmtMoney(price*plan.rate)]);
     rows.push(["⏳ เหลือระยะเวลา", cd?(cd.expired?"⛔ ครบกำหนดแล้ว":cd.text):"—", end?end.toISOString():""]);
   }
-  const imgs=o.images||[];
-  const imgHtml=imgs.length
-    ? `<div class="lv-imgs">`+imgs.map(nm=>{const u=imgUrl(o.id,nm);
-        return `<figure class="lv-cell"><img loading="lazy" src="${u}" data-full="${u}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'iph',textContent:'⚠️'}))"></figure>`;}).join("")+`</div>`
-    : `<div class="lv-noimg">— ไม่มีรูป —</div>`;
+  lockViewImgs=o.images||[]; lockViewOrderId=o.id; lockShowAll=false;
   $("lockTitle").textContent="🔒 "+(o.order_no?("#"+o.order_no):"ออเดอร์");
   $("lockBody").innerHTML=
     `<div class="lv-rows">`+rows.map(r=>
       `<div class="lv-row"><span class="lv-l">${r[0]}</span><span class="lv-v num" ${r[2]?`data-cd data-end="${r[2]}"`:""}>${r[1]}</span></div>`
     ).join("")+`</div>
-     <div class="lv-imgs-h">🖼️ รูปภาพ (${imgs.length})</div>${imgHtml}`;
-  $("lockBody").querySelectorAll(".lv-cell img").forEach(im=>im.onclick=()=>{$("lbImg").src=im.dataset.full;$("lb").classList.add("open");});
+     <div class="lv-imgs-h">🖼️ รูปภาพ (${lockViewImgs.length})</div>
+     <div id="lockImgWrap"></div>`;
+  renderLockImgs();
   $("lockUnlock").onclick=()=>unlockOrder(o);
   $("lockModal").classList.add("show"); $("lockOv").classList.add("show");
 }

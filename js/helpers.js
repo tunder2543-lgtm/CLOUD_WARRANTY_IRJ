@@ -130,29 +130,34 @@ async function compressImageFile(file){
   }catch(e){ return file; }
 }
 
-/* ===== Popup ใส่รหัสผ่าน (แทน prompt เดิม) — คืน Promise<boolean> =====
-   askPassword({title,message,icon,confirmText,danger,expect})
-   • ใส่ถูก → resolve(true) · ยกเลิก/Esc → resolve(false) · ใส่ผิด → แจ้งในตัว ให้ลองใหม่ */
-let _pwResolve=null, _pwExpect=null;
-function askPassword(opts={}){
+/* ===== Popup ยืนยัน / ใส่รหัสผ่าน (แทน confirm()/prompt() เดิม) =====
+   askConfirm({title,message,icon,confirmText,cancelText,danger}) → Promise<boolean>
+   askPassword({...,expect}) → Promise<boolean> (ใส่ผิด → แจ้งในตัว ให้ลองใหม่)
+   ยกเลิก/Esc → false · Enter → ยืนยัน */
+let _dlgResolve=null, _dlgExpect=null, _dlgMode="password";
+function _openDialog(opts,mode){
   return new Promise(resolve=>{
-    _pwResolve=resolve;
-    _pwExpect=(opts.expect!=null)?String(opts.expect):null;
-    $("pwTitle").textContent=opts.title||"ใส่รหัสผ่าน";
+    _dlgResolve=resolve; _dlgMode=mode;
+    _dlgExpect=(mode==="password"&&opts.expect!=null)?String(opts.expect):null;
+    $("pwTitle").textContent=opts.title||(mode==="password"?"ใส่รหัสผ่าน":"ยืนยัน");
     $("pwMsg").textContent=opts.message||"";
-    $("pwIcon").textContent=opts.icon||"🔒";
+    $("pwIcon").textContent=opts.icon||(mode==="password"?"🔒":"❓");
     $("pwConfirm").textContent=opts.confirmText||"ยืนยัน";
+    $("pwCancel").textContent=opts.cancelText||"ยกเลิก";
     $("pwModal").classList.toggle("danger",!!opts.danger);
     $("pwErr").textContent=""; $("pwErr").classList.remove("show");
     $("pwModal").classList.remove("shake");
-    const inp=$("pwInput"); inp.value="";
+    const inp=$("pwInput"); inp.value=""; inp.style.display=(mode==="password")?"":"none";
     $("pwOv").classList.add("show"); $("pwModal").classList.add("show");
-    setTimeout(()=>inp.focus(),60);
+    setTimeout(()=>{ (mode==="password"?inp:$("pwConfirm")).focus(); },60);
   });
 }
+function askPassword(opts={}){ return _openDialog(opts,"password"); }
+function askConfirm(opts={}){ return _openDialog(opts,"confirm"); }
 function pwSubmit(){
+  if(_dlgMode==="confirm"){ pwCloseModal(true,null); return; }
   const inp=$("pwInput"), val=inp.value.trim();
-  if(_pwExpect!=null && val!==_pwExpect){
+  if(_dlgExpect!=null && val!==_dlgExpect){
     const e=$("pwErr"); e.textContent="รหัสผ่านไม่ถูกต้อง ลองอีกครั้ง"; e.classList.add("show");
     const m=$("pwModal"); m.classList.remove("shake"); void m.offsetWidth; m.classList.add("shake");
     inp.value=""; inp.focus();
@@ -162,8 +167,8 @@ function pwSubmit(){
 }
 function pwCloseModal(ok,val){
   $("pwModal").classList.remove("show","shake"); $("pwOv").classList.remove("show");
-  const r=_pwResolve; _pwResolve=null;
-  if(r) r(_pwExpect!=null ? !!ok : (ok?val:null));
+  const r=_dlgResolve; _dlgResolve=null;
+  if(r) r(_dlgMode==="confirm" ? !!ok : (_dlgExpect!=null ? !!ok : (ok?val:null)));
 }
 function pwCancel(){ pwCloseModal(false,null); }
 function pwActive(){ return $("pwModal") && $("pwModal").classList.contains("show"); }
