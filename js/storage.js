@@ -1,11 +1,15 @@
 /* ============================================================
    storage.js — หน้าต่าง "พื้นที่จัดเก็บ" (Supabase Storage)
-   Storage ไม่มี API บอกยอดรวมสำเร็จรูป จึงต้อง list ไฟล์ทุก bucket
-   แล้วบวก metadata.size เอง → คิดเป็น % ที่ใช้ไป / เหลือเท่าไหร่
+
+   วิธีอ่านยอด 2 ทาง:
+   1) RPC storage_usage()  ← ทางหลัก: ถาม Postgres ครั้งเดียว ~0.2 วิ
+                              ได้ครบทุกไฟล์ ทุก bucket แม้ bucket ที่เว็บไม่รู้จัก
+   2) ไล่ list ทีละโฟลเดอร์ ← ทางสำรอง: ใช้เมื่อยังไม่ได้ติดตั้ง function
+                              ช้ามาก (1 ออเดอร์ = 1 request) และนับได้ไม่ครบ
    ============================================================ */
 const STO_QUOTA_KEY = KEY+"_quota";     /* โควตาที่เลือกไว้ (ไบต์) */
 const STO_CACHE_KEY = KEY+"_stousage";  /* ผลสแกนล่าสุด (กันสแกนซ้ำทุกครั้งที่เปิด) */
-const STO_FRESH_MS  = 5*60*1000;        /* ผลเก่ากว่านี้ → สแกนใหม่อัตโนมัติตอนเปิด */
+const STO_FRESH_MS  = 5*60*1000;        /* ผลเก่ากว่านี้ → อ่านใหม่อัตโนมัติตอนเปิด */
 const GB = 1024*1024*1024;
 
 /* แพ็กเกจ Supabase (โควตาพื้นที่ Storage) — เลือกให้ตรงกับที่ใช้จริง */
@@ -15,13 +19,29 @@ const STO_PLANS=[
   {id:"custom",label:"กำหนดเอง",       bytes:null},
 ];
 /* สีประจำคลัง (ใช้ทั้งจุดนำหน้าและแถบสัดส่วน) */
-const STO_PALETTE=["#7cb5a0","#8fb2ce","#b39ddb","#e6b96f","#e7a08c","#90c8b0"];
+const STO_PALETTE=["#7cb5a0","#8fb2ce","#b39ddb","#e6b96f","#e7a08c","#90c8b0","#d99fb0","#c0a98f"];
 
-/* bucket ทั้งหมดที่เว็บนี้ใช้ (อ่านจาก config.js) */
-function stoBuckets(){
-  const out=[{name:BUCKET,label:"รูปออเดอร์",emoji:"🖼️"}];
-  Object.values(ELEC_SECTIONS).forEach(ei=>out.push({name:ei.bucket,label:ei.label,emoji:ei.emoji}));
-  return out.map((b,i)=>({...b,color:STO_PALETTE[i%STO_PALETTE.length]}));
+/* bucket ที่เว็บนี้รู้จัก (จาก config.js) — ใช้เป็นป้ายชื่อสวย ๆ เท่านั้น
+   ยอดจริงมาจาก RPC ซึ่งเจอทุก bucket แม้ตัวที่ไม่ได้อยู่ในนี้ */
+function stoKnown(){
+  const m={};
+  m[BUCKET]={label:"รูปออเดอร์",emoji:"🖼️"};
+  Object.values(ELEC_SECTIONS).forEach(ei=>{ m[ei.bucket]={label:ei.label,emoji:ei.emoji}; });
+  return m;
+}
+/* ใส่ป้ายชื่อ/สีให้ผลลัพธ์
+   ลำดับสี = คลังที่รู้จักเรียงตาม config ก่อน (คลังหลักได้สีเขียวเสมอ)
+   แล้วค่อยตามด้วยคลังแปลกหน้าเรียงตามชื่อ — ทำให้สีคงที่ทุกครั้งที่อ่านใหม่ */
+function stoDecorate(rows){
+  const known=stoKnown(), order=Object.keys(known);
+  const rank=r=>{ const i=order.indexOf(r.name); return i<0?order.length:i; };
+  return rows.slice()
+    .sort((a,b)=>rank(a)-rank(b) || a.name.localeCompare(b.name))
+    .map((r,i)=>{
+      const k=known[r.name];
+      return {...r, label:k?k.label:r.name, emoji:k?k.emoji:"📦",
+              color:STO_PALETTE[i%STO_PALETTE.length], unknown:!k};
+    });
 }
 
 /* ---------- โควตา ---------- */
@@ -49,7 +69,18 @@ function fmtBytes(n){
 const fmtNum=n=>(Number(n)||0).toLocaleString("th-TH");
 
 /* ============================================================
-   สแกน: เดินทุกโฟลเดอร์ใน bucket แล้วบวกขนาดไฟล์
+   ทางหลัก — ถามฐานข้อมูลครั้งเดียว
+   ============================================================ */
+async function stoReadRpc(){
+  const {data,error}=await sb.rpc("storage_usage");
+  if(error) throw error;
+  if(!Array.isArray(data)) throw new Error("รูปแบบข้อมูลไม่ถูกต้อง");
+  return data.map(r=>({name:r.bucket, bytes:Number(r.bytes)||0, files:Number(r.files)||0, ok:true}));
+}
+
+/* ============================================================
+   ทางสำรอง — ไล่ทุกโฟลเดอร์ใน bucket ที่รู้จัก แล้วบวกขนาดไฟล์
+   (ช้าและนับได้ไม่ครบ ใช้เมื่อ RPC ใช้ไม่ได้เท่านั้น)
    ============================================================ */
 async function stoScanBucket(bucket,onTick){
   let bytes=0,files=0;
@@ -69,6 +100,24 @@ async function stoScanBucket(bucket,onTick){
   await walk("",0);
   return {bytes,files};
 }
+async function stoReadWalk(){
+  const names=Object.keys(stoKnown()), rows=[];
+  let total=0;
+  for(const name of names){
+    stoSetMsg(`กำลังไล่โฟลเดอร์ <b>${esc(name)}</b> … (${rows.length}/${names.length} คลัง · รวม ${fmtBytes(total)})`);
+    try{
+      const r=await stoScanBucket(name,(f,by)=>{
+        stoSetMsg(`กำลังไล่โฟลเดอร์ <b>${esc(name)}</b> … ${fmtNum(f)} ไฟล์ · ${fmtBytes(total+by)}`);
+      });
+      rows.push({name,bytes:r.bytes,files:r.files,ok:true});
+      total+=r.bytes;
+    }catch(e){
+      rows.push({name,bytes:0,files:0,ok:false,err:(e&&e.message)||String(e)});
+      console.warn("[storage] scan",name,e);
+    }
+  }
+  return rows;
+}
 
 let stoScanning=false, stoData=null;
 
@@ -77,28 +126,29 @@ async function stoScan(){
   if(Store.mode!=="supabase"||!sb){ stoSetMsg("🟠 ออฟไลน์ — ต้องเชื่อม Supabase ก่อนถึงจะอ่านพื้นที่ได้"); return; }
   stoScanning=true; stoSetBusy(true);
   if(!stoData) stoRender();                            /* ยังไม่มีข้อมูลเก่า → โชว์โครงร่างระหว่างรอ */
-  const buckets=stoBuckets(), rows=[];
-  let total=0,totalFiles=0,failed=0;
-  for(const b of buckets){
-    stoSetMsg(`กำลังสแกน <b>${esc(b.name)}</b> … (${rows.length}/${buckets.length} คลัง · รวม ${fmtBytes(total)})`);
-    try{
-      const r=await stoScanBucket(b.name,(f,by)=>{
-        stoSetMsg(`กำลังสแกน <b>${esc(b.name)}</b> … ${fmtNum(f)} ไฟล์ · ${fmtBytes(total+by)}`);
-      });
-      rows.push({...b,bytes:r.bytes,files:r.files,ok:true});
-      total+=r.bytes; totalFiles+=r.files;
-    }catch(e){
-      failed++;
-      rows.push({...b,bytes:0,files:0,ok:false,err:(e&&e.message)||String(e)});
-      console.warn("[storage] scan",b.name,e);
-    }
+  stoSetMsg("กำลังอ่านยอดจากฐานข้อมูล…");
+
+  let rows=[], method="rpc";
+  try{
+    rows=await stoReadRpc();
+  }catch(e){
+    console.warn("[storage] storage_usage() ใช้ไม่ได้ → ถอยไปไล่ทีละโฟลเดอร์:",e&&e.message||e);
+    method="walk";
+    stoSetMsg("อ่านสรุปจากฐานข้อมูลไม่ได้ — กำลังไล่ทีละโฟลเดอร์ (ช้ากว่ามาก)");
+    try{ rows=await stoReadWalk(); }
+    catch(e2){ stoScanning=false; stoSetBusy(false); stoSetMsg("อ่านพื้นที่ไม่สำเร็จ: "+esc((e2&&e2.message)||String(e2))); return; }
   }
-  stoData={ts:Date.now(),buckets:rows,total,files:totalFiles,failed};
+
+  rows=stoDecorate(rows);
+  const failed=rows.filter(r=>!r.ok).length;
+  stoData={ts:Date.now(),method,buckets:rows,failed,
+           total:rows.reduce((s,r)=>s+r.bytes,0),
+           files:rows.reduce((s,r)=>s+r.files,0)};
   stoSaveCache(stoData);
   /* ครั้งแรก (ยังไม่เคยเลือกแพ็กเกจ) → เดาให้จากยอดที่ใช้จริง แล้วให้ผู้ใช้แก้เองได้ */
   if(!Number(localStorage.getItem(STO_QUOTA_KEY))){
-    const fit=STO_PLANS.filter(p=>p.bytes).sort((a,b)=>a.bytes-b.bytes).find(p=>p.bytes>=total);
-    stoSetQuota(fit?fit.bytes:Math.ceil(total/GB)*GB);
+    const fit=STO_PLANS.filter(p=>p.bytes).sort((a,b)=>a.bytes-b.bytes).find(p=>p.bytes>=stoData.total);
+    stoSetQuota(fit?fit.bytes:Math.ceil(stoData.total/GB)*GB);
   }
   stoScanning=false; stoSetBusy(false);
   stoBuildPlanUI(); stoRender();
@@ -114,7 +164,7 @@ function showStoModal(on){
 }
 function stoSetBusy(on){
   const b=$("stoRescan");
-  if(b){ b.disabled=on; b.style.opacity=on?.55:1; b.textContent=on?"⏳ กำลังสแกน…":"🔄 สแกนใหม่"; }
+  if(b){ b.disabled=on; b.style.opacity=on?.55:1; b.textContent=on?"⏳ กำลังอ่าน…":"🔄 อ่านใหม่"; }
 }
 function stoSetMsg(html){ const el=$("stoMsg"); if(el) el.innerHTML=html||""; }
 
@@ -122,7 +172,7 @@ function openStorageModal(){
   $("drawer").classList.remove("show");   /* ปิดลิ้นชักตั้งค่าก่อน ไม่ให้บังหน้าต่าง */
   stoData=stoData||stoLoadCache();
   stoBuildPlanUI();
-  stoRender();
+  stoRender();                            /* มีค่าเก่า → เห็นทันที ไม่ต้องรอ */
   showStoModal(true);
   stoSetMsg("");
   if(!stoData||(Date.now()-stoData.ts)>STO_FRESH_MS) stoScan();
@@ -157,7 +207,7 @@ function stoSyncPlanUI(active){
   $("stoCustomWrap").style.display=(active==="custom")?"":"none";
 }
 
-/* ---------- โครงร่างระหว่างสแกนครั้งแรก ---------- */
+/* ---------- โครงร่างระหว่างอ่านครั้งแรก ---------- */
 function stoSkeleton(){
   return `<div class="sto-sk hero"></div><div class="sto-sk bar"></div>
     <div class="sto-sk row"></div><div class="sto-sk row"></div><div class="sto-sk row"></div><div class="sto-sk row"></div>`;
@@ -190,7 +240,7 @@ function stoRender(){
     const share=used>0?(b.bytes/used*100):0;
     return `<div class="sto-row">
       <span class="sto-dot" style="background:${b.color}"></span>
-      <span class="sto-row-n">${b.emoji} ${esc(b.label)} <code>${esc(b.name)}</code></span>
+      <span class="sto-row-n">${b.emoji} ${esc(b.label)} <code>${esc(b.name)}</code>${b.unknown?`<span class="sto-tag">ไม่ได้ใช้ในเว็บนี้</span>`:""}</span>
       <span class="sto-row-r">
         <div class="sto-row-v">${fmtBytes(b.bytes)}</div>
         <div class="sto-row-sub"><span class="num">${fmtNum(b.files)}</span> ไฟล์ · <span class="num">${share.toFixed(1)}%</span></div>
@@ -200,6 +250,9 @@ function stoRender(){
   const d=new Date(stoData.ts);
   const mon=(typeof LOG_MONTHS!=="undefined")?LOG_MONTHS[d.getMonth()]:TH_MONTHS[d.getMonth()];
   const when=`${d.getDate()} ${mon} ${d.getFullYear()+543} · ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")} น.`;
+  const src=(stoData.method==="walk")
+    ? "อ่านแบบไล่ทีละโฟลเดอร์ — ตัวเลขอาจต่ำกว่าจริง"
+    : "อ่านจากฐานข้อมูลโดยตรง — นับครบทุกไฟล์";
 
   wrap.innerHTML=`
     <div class="sto-hero">
@@ -230,5 +283,5 @@ function stoRender(){
       <div class="sto-stack-cap"><span>สัดส่วนของที่ใช้ไป</span><span class="num">${fmtBytes(used)}</span></div>`:""}
     <div class="sto-t">แยกตามคลัง</div>
     <div class="sto-rows">${rows}</div>
-    <div class="sto-when">อัปเดตล่าสุด: ${when}<br>นับเฉพาะไฟล์ในคลังรูป (ไม่รวมฐานข้อมูล)</div>`;
+    <div class="sto-when">อัปเดตล่าสุด: ${when}<br>${src}</div>`;
 }

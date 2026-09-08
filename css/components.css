@@ -426,6 +426,7 @@
 .sto-row-n{flex:1;min-width:0;font-size:14px;font-weight:500;color:var(--ink);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sto-row-n code{font-size:10.5px;color:var(--muted);background:var(--bg-2);padding:1px 6px;border-radius:6px;margin-left:6px}
+.sto-tag{font-size:10px;color:#a8813a;background:#fbf3e0;padding:1px 7px;border-radius:6px;margin-left:6px;white-space:nowrap}
 .sto-row:hover .sto-row-n code{background:var(--surface)}
 .sto-row-r{text-align:right;flex:none}
 .sto-row-v{font-family:var(--round);font-size:14px;font-weight:700;color:var(--ink);line-height:1.25}
