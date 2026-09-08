@@ -4,3 +4,7 @@
 # OS files
 Thumbs.db
 .DS_Store
+
+# bot working files (crops, plan, state, report)
+bot/work/
+bot/__pycache__/
