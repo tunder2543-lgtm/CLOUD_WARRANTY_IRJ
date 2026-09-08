@@ -13,7 +13,7 @@ function fillModalCatSelect(secId,selected){
 }
 
 function openOrder(o){
-  if(o && o.locked){ openLockView(o); return; }   /* ล็อคอยู่ → เปิดหน้าดูอย่างเดียว */
+  if(o && o.locked){ openLockView(o); return; }   /* ล็อคอยู่: เปิดหน้าดูอย่างเดียว */
   editId=o?o.id:null;
   mLocked=false;
   $("mTitle").textContent=o?"แก้ไขออเดอร์":"สร้างออเดอร์ใหม่";
@@ -52,7 +52,7 @@ function updateCardFields(){
   const sec=$("oSection").value, plan=cardPlan(sec);
   $("cardFields").style.display=plan?"":"none";
   if(!plan)return;
-  $("cardBoxHead").textContent=`${plan.emoji} ข้อมูลประกัน${plan.label} — รับซื้อคืน ${Math.round(plan.rate*100)}%`;
+  $("cardBoxHead").textContent=`ข้อมูลประกัน${plan.label} — รับซื้อคืน ${Math.round(plan.rate*100)}%`;
   $("cardBox").style.setProperty("--card-c",plan.color);
   $("cardBox").style.setProperty("--card-tint",plan.tint);
   if(!$("oTerm").value)$("oTerm").value=DEFAULT_TERM_YEARS;
@@ -64,12 +64,12 @@ function updateBuyback(){
   const price=Number($("oPrice").value)||0;
   $("oBuyback").value = price? ("฿"+fmtMoney(price*plan.rate)) : "—";
   const cd=fmtCountdown({section:sec,price:$("oPrice").value,wstart:$("oWStart").value,wterm:$("oTerm").value});
-  $("oCountdown").innerHTML = cd ? (cd.expired?"⛔ ครบกำหนดรับซื้อคืนแล้ว":("⏳ เหลือเวลา: <b>"+cd.text+"</b>")) : "⏳ กรอกวันเริ่มประกันเพื่อดูเวลาที่เหลือ";
+  $("oCountdown").innerHTML = cd ? (cd.expired?(ico("alert")+" ครบกำหนดรับซื้อคืนแล้ว"):(ico("clock")+" เหลือเวลา: <b>"+cd.text+"</b>")) : ico("clock")+" กรอกวันเริ่มประกันเพื่อดูเวลาที่เหลือ";
 }
 function renderModalImgs(){
   const g=$("imgGrid");g.innerHTML="";
   const n=mImgs.length;
-  /* รูปเยอะ → แสดงตัวอย่างแค่ IMG_PREVIEW_LIMIT รูปก่อน (กันโหลดรูปเต็มพร้อมกันจนค้าง) */
+  /* รูปเยอะ: แสดงตัวอย่างแค่ IMG_PREVIEW_LIMIT รูปก่อน (กันโหลดรูปเต็มพร้อมกันจนค้าง) */
   const limited = !mImgShowAll && n>IMG_PREVIEW_LIMIT;
   const shown = limited ? IMG_PREVIEW_LIMIT : n;
   for(let i=0;i<shown;i++){
@@ -77,11 +77,11 @@ function renderModalImgs(){
     const url=im.kind==="new"?im.url:imgUrl(editId,im.name);
     const c=document.createElement("div");c.className="cell"+(i===0?" cover":"");
     c.innerHTML=`<img src="${url}" alt="" loading="lazy" decoding="async">
-      ${i===0?`<span class="cover-tag">ปก</span>`:`<button class="star" type="button" title="ตั้งเป็นรูปแรก">⭐</button>`}
-      <button class="x" type="button" title="ลบ">✕</button>
+      ${i===0?`<span class="cover-tag">ปก</span>`:`<button class="star" type="button" title="ตั้งเป็นรูปแรก">${ico("star")}</button>`}
+      <button class="x" type="button" title="ลบ">${ico("x")}</button>
       <div class="ord">
-        <button class="mv" data-mv="-1" type="button" ${i===0?"disabled":""} title="เลื่อนซ้าย">◀</button>
-        <button class="mv" data-mv="1" type="button" ${i===n-1?"disabled":""} title="เลื่อนขวา">▶</button>
+        <button class="mv" data-mv="-1" type="button" ${i===0?"disabled":""} title="เลื่อนซ้าย">${ico("chevron-left")}</button>
+        <button class="mv" data-mv="1" type="button" ${i===n-1?"disabled":""} title="เลื่อนขวา">${ico("chevron-right")}</button>
       </div>`;
     c.querySelector("img").onclick=()=>{$("lbImg").src=url;$("lb").classList.add("open");};
     c.querySelector(".x").onclick=()=>removeModalImg(i);
@@ -92,12 +92,12 @@ function renderModalImgs(){
   if(limited){   /* ปุ่มดูรูปที่เหลือ */
     const more=document.createElement("div");
     more.className="add img-more";
-    more.innerHTML=`<span class="im-ic">📷</span><span class="im-tx">ดูรูปทั้งหมด<br>(${n} รูป)</span>`;
+    more.innerHTML=`<span class="im-ic">${ico("camera")}</span><span class="im-tx">ดูรูปทั้งหมด<br>(${n} รูป)</span>`;
     more.onclick=()=>{ mImgShowAll=true; renderModalImgs(); };
     g.appendChild(more);
   }
   if(n<MAX_ORDER_IMGS){
-    const a=document.createElement("div");a.className="add";a.textContent="＋";
+    const a=document.createElement("div");a.className="add";a.textContent="";
     a.onclick=()=>$("oFiles").click();
     g.appendChild(a);
   }
@@ -119,7 +119,7 @@ function removeModalImg(i){
   if(im.kind==="new")URL.revokeObjectURL(im.url);
   mImgs.splice(i,1);renderModalImgs();
 }
-/* ===== ย้ายลำดับรูป (⭐ตั้งเป็นรูปแรก / ◀▶ เลื่อนทีละช่อง) — บันทึกเมื่อกด "บันทึก" ===== */
+/* ===== ย้ายลำดับรูป (ตั้งเป็นรูปแรก / เลื่อนทีละช่อง) — บันทึกเมื่อกด "บันทึก" ===== */
 function setCoverImg(i){ if(i<=0||i>=mImgs.length)return; const [im]=mImgs.splice(i,1); mImgs.unshift(im); renderModalImgs(); }
 function moveImg(i,dir){ const j=i+dir; if(j<0||j>=mImgs.length)return; const t=mImgs[i]; mImgs[i]=mImgs[j]; mImgs[j]=t; renderModalImgs(); }
 async function saveOrder(){
@@ -166,7 +166,7 @@ async function deleteOrder(){
   const o=DB.orders.find(x=>x.id===editId);if(!o)return;
   const ok=await askConfirm({title:"ลบออเดอร์นี้?",
     message:`ลบออเดอร์ ${o.order_no?"#"+o.order_no:""} และรูปทั้งหมดถาวร?`,
-    icon:"🗑",confirmText:"ลบออเดอร์",danger:true});
+    icon:"trash",confirmText:"ลบออเดอร์",danger:true});
   if(!ok)return;
   await Store.deleteOrder(o);
   const secNm=o.section?((sectionById(o.section)||{}).name||""):"";
@@ -184,18 +184,18 @@ function showModal(on){$("modal").classList.toggle("show",on);$("ov").classList.
 async function lockCurrentOrder(){
   const ok=await askConfirm({title:"ล็อคออเดอร์นี้?",
     message:"หลังล็อคจะเปิดดูได้อย่างเดียว — ต้องใส่รหัสผ่านเพื่อกลับมาแก้ไข",
-    icon:"🔒",confirmText:"🔒 ล็อค"});
+    icon:"lock",confirmText:"ล็อค"});
   if(!ok)return;
   mLocked=true;
   await saveOrder();
-  toast("🔒 ล็อคออเดอร์แล้ว");
+  toast("ล็อคออเดอร์แล้ว");
 }
 /* render ส่วนรูปในหน้า locked — โชว์ 6 รูปก่อน + ปุ่ม "ดูรูปทั้งหมด" (กันหน่วงตอนรูปเยอะ) */
 function renderLockImgs(){
   const wrap=$("lockImgWrap"); if(!wrap) return;
   const imgs=lockViewImgs, n=imgs.length, id=lockViewOrderId;
   if(!n){ wrap.innerHTML=`<div class="lv-noimg">— ไม่มีรูป —</div>`; return; }
-  const onerr=`onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'iph',textContent:'⚠️'}))"`;
+  const onerr=`onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'iph',textContent:''}))"`;
   /* รูปแรก = ภาพใหญ่ (เห็นชัด) */
   const heroU=imgUrl(id,imgs[0]);
   let html=`<figure class="lv-hero"><img loading="lazy" decoding="async" src="${heroU}" data-full="${heroU}" alt="" ${onerr}></figure>`;
@@ -208,66 +208,66 @@ function renderLockImgs(){
       html+=`<figure class="lv-cell"><img loading="lazy" decoding="async" src="${u}" data-full="${u}" alt="" ${onerr}></figure>`;
     }
     html+=`</div>`;
-    if(limited) html+=`<button class="btn ghost lv-more" id="lockMore" type="button">📷 ดูรูปทั้งหมด (${n} รูป)</button>`;
+    if(limited) html+=`<button class="btn ghost lv-more" id="lockMore" type="button">${ico("camera")} ดูรูปทั้งหมด (${n} รูป)</button>`;
   }
   wrap.innerHTML=html;
   wrap.querySelectorAll("img[data-full]").forEach(im=>im.onclick=()=>{$("lbImg").src=im.dataset.full;$("lb").classList.add("open");});
   const mb=$("lockMore"); if(mb) mb.onclick=()=>{ lockShowAll=true; renderLockImgs(); };
 }
-/* ล็อค/ปลดล็อค "ทั้งหมด" ในหัวข้อที่เปิดอยู่ (lock=true → ล็อค, false → ปลดล็อค) */
+/* ล็อค/ปลดล็อค "ทั้งหมด" ในหัวข้อที่เปิดอยู่ (lock=true คือล็อค, false คือปลดล็อค) */
 async function bulkSetLock(lock){
   const list=(typeof scoped==="function"?scoped():DB.orders).filter(o=>!isElecSection(o.section));
-  if(!list.length){ await askAlert({title:"ไม่มีออเดอร์",message:"หัวข้อนี้ยังไม่มีออเดอร์ให้ทำรายการ",icon:"ℹ️"}); return; }
+  if(!list.length){ await askAlert({title:"ไม่มีออเดอร์",message:"หัวข้อนี้ยังไม่มีออเดอร์ให้ทำรายการ",icon:"info"}); return; }
   const targets=list.filter(o=>(!!o.locked)!==lock);   /* เฉพาะที่สถานะต่างจากที่จะตั้ง */
-  if(!targets.length){ await askAlert({title:lock?"ล็อคครบแล้ว":"ปลดล็อคครบแล้ว",message:lock?"ทุกออเดอร์ในหัวข้อนี้ถูกล็อคอยู่แล้ว":"ทุกออเดอร์ในหัวข้อนี้ปลดล็อคอยู่แล้ว",icon:"ℹ️"}); return; }
+  if(!targets.length){ await askAlert({title:lock?"ล็อคครบแล้ว":"ปลดล็อคครบแล้ว",message:lock?"ทุกออเดอร์ในหัวข้อนี้ถูกล็อคอยู่แล้ว":"ทุกออเดอร์ในหัวข้อนี้ปลดล็อคอยู่แล้ว",icon:"info"}); return; }
   if(lock){
-    const ok=await askConfirm({title:"ล็อคทั้งหมด?",message:`ล็อค ${targets.length} ออเดอร์ในหัวข้อนี้ — จะเปิดดูได้อย่างเดียว ต้องใส่รหัสผ่านเพื่อกลับมาแก้ไข`,icon:"🔒",confirmText:`🔒 ล็อค ${targets.length} รายการ`});
+    const ok=await askConfirm({title:"ล็อคทั้งหมด?",message:`ล็อค ${targets.length} ออเดอร์ในหัวข้อนี้ — จะเปิดดูได้อย่างเดียว ต้องใส่รหัสผ่านเพื่อกลับมาแก้ไข`,icon:"lock",confirmText:`ล็อค ${targets.length} รายการ`});
     if(!ok) return;
   }else{
-    const ok=await askPassword({title:"ปลดล็อคทั้งหมด?",message:`ปลดล็อค ${targets.length} ออเดอร์ในหัวข้อนี้`,icon:"🔓",confirmText:`🔓 ปลดล็อค ${targets.length} รายการ`,expect:UNLOCK_PASSWORD});
+    const ok=await askPassword({title:"ปลดล็อคทั้งหมด?",message:`ปลดล็อค ${targets.length} ออเดอร์ในหัวข้อนี้`,icon:"unlock",confirmText:`ปลดล็อค ${targets.length} รายการ`,expect:UNLOCK_PASSWORD});
     if(!ok) return;
   }
   targets.forEach(o=>o.locked=lock);
   await Store.saveOrdersBulk(targets);
   Log.add("edit_order",(lock?"ล็อค":"ปลดล็อค")+"ทั้งหมด",(lock?"ล็อค ":"ปลดล็อค ")+targets.length+" ออเดอร์ในหัวข้อ");
-  renderAll(); toast((lock?"🔒 ล็อค":"🔓 ปลดล็อค")+" "+targets.length+" ออเดอร์แล้ว");
+  renderAll(); toast((lock?"ล็อค":"ปลดล็อค")+" "+targets.length+" ออเดอร์แล้ว");
 }
 /* ล็อค/ปลดล็อคจากปุ่มบนการ์ด (ไม่ต้องเปิดโมดัล) */
 async function toggleLockOrder(o){
   if(!o) return;
   if(o.locked){
-    const ok=await askPassword({title:"ปลดล็อคออเดอร์",message:`ปลดล็อค ${o.order_no?"#"+o.order_no:"ออเดอร์นี้"} เพื่อกลับมาแก้ไข`,icon:"🔓",confirmText:"🔓 ปลดล็อค",expect:UNLOCK_PASSWORD});
+    const ok=await askPassword({title:"ปลดล็อคออเดอร์",message:`ปลดล็อค ${o.order_no?"#"+o.order_no:"ออเดอร์นี้"} เพื่อกลับมาแก้ไข`,icon:"unlock",confirmText:"ปลดล็อค",expect:UNLOCK_PASSWORD});
     if(!ok) return;
     o.locked=false; await Store.saveOrder(o);
     Log.add("edit_order","ออเดอร์ #"+(o.order_no||"(ไม่มีเลข)"),"ปลดล็อคออเดอร์ (จากการ์ด)");
-    renderAll(); toast("🔓 ปลดล็อคแล้ว");
+    renderAll(); toast("ปลดล็อคแล้ว");
   }else{
-    const ok=await askConfirm({title:"ล็อคออเดอร์นี้?",message:"หลังล็อคจะเปิดดูได้อย่างเดียว — ต้องใส่รหัสผ่านเพื่อกลับมาแก้ไข",icon:"🔒",confirmText:"🔒 ล็อค"});
+    const ok=await askConfirm({title:"ล็อคออเดอร์นี้?",message:"หลังล็อคจะเปิดดูได้อย่างเดียว — ต้องใส่รหัสผ่านเพื่อกลับมาแก้ไข",icon:"lock",confirmText:"ล็อค"});
     if(!ok) return;
     o.locked=true; await Store.saveOrder(o);
     Log.add("edit_order","ออเดอร์ #"+(o.order_no||"(ไม่มีเลข)"),"ล็อคออเดอร์ (จากการ์ด)");
-    renderAll(); toast("🔒 ล็อคแล้ว");
+    renderAll(); toast("ล็อคแล้ว");
   }
 }
 function openLockView(o){
   const plan=cardPlan(o.section), cd=plan?fmtCountdown(o):null;
   const rows=[
-    ["🧾 เลขออเดอร์", o.order_no?("#"+esc(o.order_no)):"—"],
-    ["👤 ชื่อลูกค้า", esc(o.customer||"—")],
-    ["📅 วันที่", o.date?esc(dpFormat(o.date)):"—"],
+    ["เลขออเดอร์", o.order_no?("#"+esc(o.order_no)):"—"],
+    ["ชื่อลูกค้า", esc(o.customer||"—")],
+    ["วันที่", o.date?esc(dpFormat(o.date)):"—"],
   ];
   if(plan){
     const price=Number(o.price)||0, end=warrantyEnd(o);
-    rows.push(["💰 มูลค่าบัตร (เต็ม)", "฿"+fmtMoney(price)]);
-    rows.push([`💵 ราคารับซื้อคืน ${Math.round(plan.rate*100)}%`, "฿"+fmtMoney(price*plan.rate)]);
-    rows.push(["⏳ เหลือระยะเวลา", cd?(cd.expired?"⛔ ครบกำหนดแล้ว":cd.text):"—", end?end.toISOString():""]);
+    rows.push(["มูลค่าบัตร (เต็ม)", "฿"+fmtMoney(price)]);
+    rows.push([`ราคารับซื้อคืน ${Math.round(plan.rate*100)}%`, "฿"+fmtMoney(price*plan.rate)]);
+    rows.push(["เหลือระยะเวลา", cd?(cd.expired?"ครบกำหนดแล้ว":cd.text):"—", end?end.toISOString():""]);
   }
   lockViewImgs=o.images||[]; lockViewOrderId=o.id; lockShowAll=false;
-  $("lockTitle").textContent="🔒 "+(o.order_no?("#"+o.order_no):"ออเดอร์");
+  $("lockTitle").textContent=(o.order_no?("#"+o.order_no):"ออเดอร์");
   $("lockRows").innerHTML=`<div class="lv-rows">`+rows.map(r=>
       `<div class="lv-row"><span class="lv-l">${r[0]}</span><span class="lv-v num" ${r[2]?`data-cd data-end="${r[2]}"`:""}>${r[1]}</span></div>`
     ).join("")+`</div>`;
-  $("lockImgHead").textContent=`🖼️ รูปภาพ (${lockViewImgs.length})`;
+  $("lockImgHead").textContent=`รูปภาพ (${lockViewImgs.length})`;
   renderLockImgs();
   $("lockUnlock").onclick=()=>unlockOrder(o);
   $("lockModal").classList.add("show"); $("lockOv").classList.add("show");
@@ -275,12 +275,12 @@ function openLockView(o){
 function closeLockView(){ $("lockModal").classList.remove("show"); $("lockOv").classList.remove("show"); }
 async function unlockOrder(o){
   const ok=await askPassword({title:"ปลดล็อคออเดอร์",message:"ใส่รหัสผ่านเพื่อกลับมาแก้ไขออเดอร์นี้",
-    icon:"🔓",confirmText:"🔓 ปลดล็อค",expect:UNLOCK_PASSWORD});
+    icon:"unlock",confirmText:"ปลดล็อค",expect:UNLOCK_PASSWORD});
   if(!ok)return;
   o.locked=false;
   await Store.saveOrder(o);
   Log.add("edit_order","ออเดอร์ #"+(o.order_no||"(ไม่มีเลข)"),"ปลดล็อคออเดอร์");
   closeLockView(); renderAll();
   openOrder(DB.orders.find(x=>x.id===o.id)||o);
-  toast("🔓 ปลดล็อคแล้ว");
+  toast("ปลดล็อคแล้ว");
 }

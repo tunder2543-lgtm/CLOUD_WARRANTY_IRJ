@@ -43,7 +43,7 @@ function sanitizeImgName(name,i){
 }
 
 let toastT;
-function toast(msg){const t=$("toast");t.textContent="✓ "+msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2100);}
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2100);}
 function countUp(el,to,dur=1200){const s=performance.now();(function step(t){let p=Math.min((t-s)/dur,1);p=1-Math.pow(1-p,3);el.textContent=Math.round(to*p);if(p<1)requestAnimationFrame(step);})(s);}
 
 /* ===== ตัวแปลง ออเดอร์ <-> แถว Supabase ===== */
@@ -90,7 +90,7 @@ function countdown(end){
 function fmtCountdown(o){
   const end=warrantyEnd(o); if(!end) return null;
   const c=countdown(end);
-  if(c.expired) return {expired:true, text:"⛔ ครบกำหนดแล้ว"};
+  if(c.expired) return {expired:true, text:"ครบกำหนดแล้ว"};
   return {expired:false, text:`${c.y} ปี ${c.mo} เดือน ${c.d} วัน · ${pad2(c.h)}:${pad2(c.mi)}:${pad2(c.s)}`};
 }
 
@@ -144,7 +144,7 @@ function _openDialog(opts,mode){
     const isInput=(mode==="password"||mode==="prompt");
     $("pwTitle").textContent=opts.title||({password:"ใส่รหัสผ่าน",alert:"แจ้งเตือน",prompt:"กรอกข้อมูล"}[mode]||"ยืนยัน");
     $("pwMsg").textContent=opts.message||"";
-    $("pwIcon").textContent=opts.icon||({password:"🔒",alert:"⚠️",prompt:"✏️"}[mode]||"❓");
+    $("pwIcon").innerHTML=ico(opts.icon||({password:"lock",alert:"alert",prompt:"edit"}[mode]||"help"));
     $("pwConfirm").textContent=opts.confirmText||(mode==="alert"?"ตกลง":"ยืนยัน");
     $("pwCancel").textContent=opts.cancelText||"ยกเลิก";
     $("pwCancel").style.display=(mode==="alert")?"none":"";

@@ -19,7 +19,7 @@ function tickCountdowns(){
   document.querySelectorAll("[data-cd][data-end]").forEach(el=>{
     if(!el.dataset.end)return;
     const c=countdown(new Date(el.dataset.end));
-    if(c.expired){ el.textContent="⛔ ครบกำหนดแล้ว"; el.classList.add("exp"); }
+    if(c.expired){ el.textContent="ครบกำหนดแล้ว"; el.classList.add("exp"); }
     else{ el.textContent=`${c.y} ปี ${c.mo} เดือน ${c.d} วัน · ${pad2(c.h)}:${pad2(c.mi)}:${pad2(c.s)}`; el.classList.remove("exp"); }
   });
   const cf=$("cardFields");
@@ -41,7 +41,7 @@ function wire(){
   document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{view=b.dataset.v;document.querySelectorAll(".seg button").forEach(x=>x.classList.remove("on"));b.classList.add("on");renderGallery();});
   /* โมดัลออเดอร์ */
   $("mSave").onclick=saveOrder; $("mDelete").onclick=deleteOrder;
-  $("mCancel").onclick=()=>showModal(false); $("mClose").onclick=()=>showModal(false); $("ov").onclick=()=>{};   /* กดพื้นหลังไม่ปิด — ต้องกด ✕ หรือ ยกเลิก */
+  $("mCancel").onclick=()=>showModal(false); $("mClose").onclick=()=>showModal(false); $("ov").onclick=()=>{};   /* กดพื้นหลังไม่ปิด — ต้องกดปุ่มปิด หรือ ยกเลิก */
   $("mLock").onclick=lockCurrentOrder;
   /* โมดัลดูออเดอร์แบบล็อค (read-only) */
   $("lockClose").onclick=closeLockView; $("lockCloseBtn").onclick=closeLockView; $("lockOv").onclick=()=>{};
@@ -76,7 +76,7 @@ function wire(){
   },true);
   /* โมดัลนำเข้ารูปเข้าคลัง (ประกันอิเล็คทรอนิค) */
   $("elecClose").onclick=()=>{ if(elecBusy()){ toast("กำลังอัปโหลด… รอให้เสร็จ หรือกด “ยกเลิก & ลบที่อัปแล้ว”"); return; } showElecModal(false); };
-  $("elecOv").onclick=()=>{};   /* กดพื้นหลังไม่ปิด — ต้องกด ✕ (ระหว่างอัปโหลด ✕ ก็ถูกล็อกไว้) */
+  $("elecOv").onclick=()=>{};   /* กดพื้นหลังไม่ปิด — ต้องกดปุ่มปิด (ระหว่างอัปโหลดปุ่มปิดก็ถูกล็อกไว้) */
   $("elecCancel1").onclick=()=>showElecModal(false);
   $("elecDrop").onclick=()=>$("elecFolder").click();
   $("elecFolder").onchange=e=>{ if(e.target.files&&e.target.files.length){ handleElecFolder(e.target.files); e.target.value=""; } };
@@ -86,7 +86,7 @@ function wire(){
   $("elecAbort").onclick=elecAbort;
   /* นำเข้า Excel/CSV */
   $("btnImportExcel").onclick=openImportModal;
-  $("impClose").onclick=closeImportModal; $("impOv").onclick=()=>{};   /* กดพื้นหลังไม่ปิด — ต้องกด ✕ */
+  $("impClose").onclick=closeImportModal; $("impOv").onclick=()=>{};   /* กดพื้นหลังไม่ปิด — ต้องกดปุ่มปิด */
   $("impPick").onclick=()=>$("impFile").click();
   $("impFile").onchange=e=>{if(e.target.files[0]){handleImportFile(e.target.files[0]);e.target.value="";}};
   $("impTemplate").onclick=importTemplate;
@@ -99,12 +99,12 @@ function wire(){
   $("logClear").onclick=async()=>{
     const n=(Store._cache&&Store._cache.logs)?Store._cache.logs.length:0;
     if(!n){toast("ยังไม่มีบันทึก");return;}
-    if(!(await askConfirm({title:"ล้างประวัติทั้งหมด?",message:`ล้างประวัติการทำงานทั้งหมด (${n} รายการ)`,icon:"🧹",confirmText:"ล้างประวัติ",danger:true})))return;
+    if(!(await askConfirm({title:"ล้างประวัติทั้งหมด?",message:`ล้างประวัติการทำงานทั้งหมด (${n} รายการ)`,icon:"broom",confirmText:"ล้างประวัติ",danger:true})))return;
     await Store.clearLogs(); renderLogs(); toast("ล้างประวัติแล้ว");
   };
   /* lightbox + Escape */
   const lbCloseFn=()=>{ $("lb").classList.remove("open"); if(typeof closeElecLB==="function")closeElecLB(); };
-  $("lb").onclick=()=>{};                       /* กดพื้นหลังไม่ปิด — ต้องกด ✕ */
+  $("lb").onclick=()=>{};                       /* กดพื้นหลังไม่ปิด — ต้องกดปุ่มปิด */
   $("lbClose").onclick=e=>{ e.stopPropagation(); lbCloseFn(); };
   $("lbImg").onclick=e=>e.stopPropagation();     /* กดรูปไม่ปิด */
   $("lbPrev").onclick=e=>{ e.stopPropagation(); if(typeof elecLBPrev==="function")elecLBPrev(); };
@@ -117,7 +117,7 @@ function wire(){
   document.addEventListener("keydown",e=>{if(e.key==="Escape"){showModal(false);closeLockView();closeImportModal();if(typeof showElecModal==="function"&&!(typeof elecBusy==="function"&&elecBusy()))showElecModal(false);if(typeof showStoModal==="function")showStoModal(false);dr.classList.remove("show");lg.classList.remove("show");$("lb").classList.remove("open");if(typeof closeElecLB==="function")closeElecLB();$("sidebar").classList.remove("show");$("sbOv").classList.remove("show");}});
 }
 
-/* ===== แสดงรายการบันทึกกิจกรรม (ใหม่→เก่า, เวลาอ่านง่ายภาษาไทย) ===== */
+/* ===== แสดงรายการบันทึกกิจกรรม (ใหม่ไปเก่า, เวลาอ่านง่ายภาษาไทย) ===== */
 const LOG_MONTHS=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 function pad2(n){return String(n).padStart(2,"0");}
 function fmtLogTime(iso){
@@ -136,17 +136,17 @@ function renderLogs(){
   const list=$("logList"); if(!list) return;
   const logs=(Store._cache&&Store._cache.logs)||[];
   const cnt=$("logCount");
-  if(cnt) cnt.textContent=logs.length?("ทั้งหมด "+logs.length+" รายการ · เรียงใหม่→เก่า"):"ยังไม่มีรายการ";
+  if(cnt) cnt.textContent=logs.length?("ทั้งหมด "+logs.length+" รายการ · เรียงใหม่ไปเก่า"):"ยังไม่มีรายการ";
   if(!logs.length){
     list.className="log-empty";
-    list.innerHTML=`<div class="log-empty-ic">📜</div>
+    list.innerHTML=`<div class="log-empty-ic">${ico("list")}</div>
       <div class="log-empty-h">ยังไม่มีบันทึกกิจกรรม</div>
       <div class="log-empty-s">เมื่อคุณสร้าง แก้ไข หรือลบออเดอร์ รายการจะปรากฏที่นี่</div>`;
     return;
   }
   list.className="zlist";
   list.innerHTML=logs.map(e=>{
-    const m=LOG_LABELS[e.action]||{t:e.action||"กิจกรรม",ic:"•",tone:"edit"};
+    const m=LOG_LABELS[e.action]||{t:e.action||"กิจกรรม",ic:ico("dot"),tone:"edit"};
     return `<div class="zitem log" title="${esc(fmtLogFull(e.ts))}">
       <span class="log-ic tone-${m.tone}">${m.ic}</span>
       <div class="log-body">

@@ -35,10 +35,10 @@ function renderCatManager(){
   }
   list.forEach(c=>{
     const el=document.createElement("div");el.className="zitem";
-    el.innerHTML=`<span class="zc" style="background:${c.color}"></span><span class="zn">${esc(c.name)}</span><span class="zct num">${orderCount(c.id)} ออเดอร์</span><button class="del">🗑</button>`;
+    el.innerHTML=`<span class="zc" style="background:${c.color}"></span><span class="zn">${esc(c.name)}</span><span class="zct num">${orderCount(c.id)} ออเดอร์</span><button class="del">${ico("trash")}</button>`;
     el.querySelector(".del").onclick=async()=>{
-      if(orderCount(c.id)>0){await askAlert({title:"ลบไม่ได้",message:`ประเภท "${c.name}" ยังมีออเดอร์ ${orderCount(c.id)} รายการ — ย้ายออกก่อน`,icon:"⚠️"});return;}
-      if(!(await askConfirm({title:`ลบประเภท "${c.name}"?`,icon:"🗑",confirmText:"ลบ",danger:true})))return;
+      if(orderCount(c.id)>0){await askAlert({title:"ลบไม่ได้",message:`ประเภท "${c.name}" ยังมีออเดอร์ ${orderCount(c.id)} รายการ — ย้ายออกก่อน`,icon:"alert"});return;}
+      if(!(await askConfirm({title:`ลบประเภท "${c.name}"?`,icon:"trash",confirmText:"ลบ",danger:true})))return;
       CATEGORIES=CATEGORIES.filter(x=>x.id!==c.id);
       await Store.saveCategories(CATEGORIES);await Store.deleteCategory(c.id);
       Log.add("del_category","ประเภทงาน: "+c.name,s?("จากหัวข้อ "+s.name):null);
@@ -49,9 +49,9 @@ function renderCatManager(){
 }
 async function addCat(){
   const secId=(currentSection&&currentSection!=="__none")?currentSection:null;
-  if(!secId){await askAlert({title:"เลือกหัวข้อก่อน",message:"เปิดหัวข้อจากเมนูซ้ายก่อน แล้วค่อยเพิ่มประเภทงานของหัวข้อนั้น",icon:"⚠️"});return;}
+  if(!secId){await askAlert({title:"เลือกหัวข้อก่อน",message:"เปิดหัวข้อจากเมนูซ้ายก่อน แล้วค่อยเพิ่มประเภทงานของหัวข้อนั้น",icon:"alert"});return;}
   const inp=$("newCat"),name=inp.value.trim();if(!name){inp.focus();return;}
-  if(catsFor(secId).some(c=>c.name===name)){await askAlert({title:"ชื่อซ้ำ",message:"หัวข้อนี้มีประเภทชื่อนี้แล้ว",icon:"⚠️"});return;}
+  if(catsFor(secId).some(c=>c.name===name)){await askAlert({title:"ชื่อซ้ำ",message:"หัวข้อนี้มีประเภทชื่อนี้แล้ว",icon:"alert"});return;}
   CATEGORIES.push({id:catGenId(),name,color:pickCatColor,sort:catsFor(secId).length+1,section:secId});
   await Store.saveCategories(CATEGORIES);
   const s=sectionById(secId);
@@ -67,7 +67,7 @@ async function migrateCompressImages(){
   /* งานนี้เขียนทับต้นฉบับถาวร (รูปประกัน = หลักฐาน) — กั้นด้วยรหัสเหมือนงานอันตรายอื่น */
   const ok=await askPassword({title:"บีบอัดรูปเก่าให้เล็กลง",
     message:"ย่อด้านยาวสุดเหลือ 1600px แล้วเขียนทับไฟล์เดิม ถาวร — กู้ความละเอียดเดิมไม่ได้\nอย่าปิดหน้านี้จนกว่าจะเสร็จ\n\nใส่รหัสผ่านเพื่อยืนยัน",
-    icon:"🗜️",confirmText:"เริ่มบีบอัด",danger:true,expect:UNLOCK_PASSWORD});
+    icon:"compress",confirmText:"เริ่มบีบอัด",danger:true,expect:UNLOCK_PASSWORD});
   if(!ok) return;
   const btn=$("btnCompressImgs"), prog=$("compressProg");
   const setP=t=>{ if(prog) prog.textContent=t; };

@@ -92,9 +92,9 @@ function dpDayHTML(s){
     cells+=`<button type="button" class="dp-d${isSel?" sel":""}${iso===tISO?" today":""}" data-d="${d}">${d}</button>`;
   }
   return `<div class="dp-head">
-      <button type="button" class="dp-nav" data-nav="-1" title="เดือนก่อน">‹</button>
-      <button type="button" class="dp-title" data-my>${DP_MON[s.mo]} ${s.y} ▾</button>
-      <button type="button" class="dp-nav" data-nav="1" title="เดือนถัดไป">›</button>
+      <button type="button" class="dp-nav" data-nav="-1" title="เดือนก่อน">${ico("chevron-left")}</button>
+      <button type="button" class="dp-title" data-my>${DP_MON[s.mo]} ${s.y} ${ico("chevron-down")}</button>
+      <button type="button" class="dp-nav" data-nav="1" title="เดือนถัดไป">${ico("chevron-right")}</button>
     </div>
     <div class="dp-wd">${DP_WD.map(w=>`<span>${w}</span>`).join("")}</div>
     <div class="dp-grid">${cells}</div>
@@ -109,7 +109,7 @@ function dpMYHTML(s){
   let years="";
   for(let y=y1;y>=y0;y--) years+=`<button type="button" class="dp-y${y===s.y?" sel":""}" data-y="${y}">${y} <small>(พ.ศ. ${y+543})</small></button>`;
   const months=DP_MON.map((m,i)=>`<button type="button" class="dp-m${i===s.mo?" sel":""}" data-m="${i}">${m}</button>`).join("");
-  return `<div class="dp-head"><button type="button" class="dp-title dp-back" data-day>‹ เลือกวัน · ${DP_MON[s.mo]} ${s.y}</button></div>
+  return `<div class="dp-head"><button type="button" class="dp-title dp-back" data-day>${ico("chevron-left")} เลือกวัน · ${DP_MON[s.mo]} ${s.y}</button></div>
     <div class="dp-my"><div class="dp-years">${years}</div><div class="dp-months">${months}</div></div>`;
 }
 function dpWire(){

@@ -25,7 +25,7 @@ const STO_PALETTE=["#7cb5a0","#8fb2ce","#b39ddb","#e6b96f","#e7a08c","#90c8b0","
    ยอดจริงมาจาก RPC ซึ่งเจอทุก bucket แม้ตัวที่ไม่ได้อยู่ในนี้ */
 function stoKnown(){
   const m={};
-  m[BUCKET]={label:"รูปออเดอร์",emoji:"🖼️"};
+  m[BUCKET]={label:"รูปออเดอร์",emoji:ico("images")};
   Object.values(ELEC_SECTIONS).forEach(ei=>{ m[ei.bucket]={label:ei.label,emoji:ei.emoji}; });
   return m;
 }
@@ -39,7 +39,7 @@ function stoDecorate(rows){
     .sort((a,b)=>rank(a)-rank(b) || a.name.localeCompare(b.name))
     .map((r,i)=>{
       const k=known[r.name];
-      return {...r, label:k?k.label:r.name, emoji:k?k.emoji:"📦",
+      return {...r, label:k?k.label:r.name, emoji:k?k.emoji:ico("archive"),
               color:STO_PALETTE[i%STO_PALETTE.length], unknown:!k};
     });
 }
@@ -123,7 +123,7 @@ let stoScanning=false, stoData=null;
 
 async function stoScan(){
   if(stoScanning) return;
-  if(Store.mode!=="supabase"||!sb){ stoSetMsg("🟠 ออฟไลน์ — ต้องเชื่อม Supabase ก่อนถึงจะอ่านพื้นที่ได้"); return; }
+  if(Store.mode!=="supabase"||!sb){ stoSetMsg("ออฟไลน์ — ต้องเชื่อม Supabase ก่อนถึงจะอ่านพื้นที่ได้"); return; }
   stoScanning=true; stoSetBusy(true);
   if(!stoData) stoRender();                            /* ยังไม่มีข้อมูลเก่า → โชว์โครงร่างระหว่างรอ */
   stoSetMsg("กำลังอ่านยอดจากฐานข้อมูล…");
@@ -152,7 +152,7 @@ async function stoScan(){
   }
   stoScanning=false; stoSetBusy(false);
   stoBuildPlanUI(); stoRender();
-  stoSetMsg(failed?`⚠️ อ่านไม่ได้ ${failed} คลัง — ตัวเลขรวมอาจต่ำกว่าจริง`:"");
+  stoSetMsg(failed?`${ico("alert")} อ่านไม่ได้ ${failed} คลัง — ตัวเลขรวมอาจต่ำกว่าจริง`:"");
 }
 
 /* ============================================================
@@ -164,7 +164,7 @@ function showStoModal(on){
 }
 function stoSetBusy(on){
   const b=$("stoRescan");
-  if(b){ b.disabled=on; b.style.opacity=on?.55:1; b.textContent=on?"⏳ กำลังอ่าน…":"🔄 อ่านใหม่"; }
+  if(b){ b.disabled=on; b.style.opacity=on?.55:1; b.textContent=on?"กำลังอ่าน…":"อ่านใหม่"; }
 }
 function stoSetMsg(html){ const el=$("stoMsg"); if(el) el.innerHTML=html||""; }
 
@@ -217,12 +217,12 @@ function stoRender(){
   const wrap=$("stoBody"); if(!wrap) return;
   if(!stoData){
     wrap.innerHTML=(Store.mode==="supabase")?stoSkeleton()
-      :`<div class="sto-empty">🟠 ออฟไลน์ — เชื่อม Supabase ก่อนถึงจะอ่านพื้นที่ได้</div>`;
+      :`<div class="sto-empty">ออฟไลน์ — เชื่อม Supabase ก่อนถึงจะอ่านพื้นที่ได้</div>`;
     return;
   }
   const quota=stoQuota(), used=stoData.total, left=Math.max(quota-used,0);
   const pct=quota>0?(used/quota*100):0;
-  const col=pct>=90?"#c9695b":pct>=75?"#e6b96f":"#7cb5a0";
+  const col=pct>=90?"#b42318":pct>=75?"#b7791f":"#2f7a5a";
   const R=53, C=2*Math.PI*R, off=C-C*Math.min(pct,100)/100;
   const sorted=stoData.buckets.slice().sort((a,b)=>b.bytes-a.bytes);
 
@@ -277,8 +277,8 @@ function stoRender(){
           <span class="num">${stoData.buckets.length}</span> คลัง</div>
       </div>
     </div>
-    ${pct>=90?`<div class="sto-warn"><span>⚠️</span><span>พื้นที่ใกล้เต็ม — ลบรูปที่ไม่ใช้ หรือกด “บีบอัดรูปเก่าให้เล็กลง” ในหน้าตั้งค่า</span></div>`
-      :pct>=75?`<div class="sto-warn soft"><span>💡</span><span>ใช้ไปเกิน 75% แล้ว — เผื่อพื้นที่ไว้ก่อนเต็ม</span></div>`:""}
+    ${pct>=90?`<div class="sto-warn"><span>${ico("alert")}</span><span>พื้นที่ใกล้เต็ม — ลบรูปที่ไม่ใช้ หรือกด “บีบอัดรูปเก่าให้เล็กลง” ในหน้าตั้งค่า</span></div>`
+      :pct>=75?`<div class="sto-warn soft"><span>${ico("info")}</span><span>ใช้ไปเกิน 75% แล้ว — เผื่อพื้นที่ไว้ก่อนเต็ม</span></div>`:""}
     ${stack?`<div class="sto-stack">${stack}</div>
       <div class="sto-stack-cap"><span>สัดส่วนของที่ใช้ไป</span><span class="num">${fmtBytes(used)}</span></div>`:""}
     <div class="sto-t">แยกตามคลัง</div>

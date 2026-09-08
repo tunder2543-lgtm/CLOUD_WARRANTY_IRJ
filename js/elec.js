@@ -205,7 +205,7 @@ function renderElecLoading(ei){
     <div class="elec-store">${ei?ei.emoji:""} คลัง <b>${esc(ei?ei.label:"")}</b>
       <span class="elec-store-sub">กำลังอ่านรายการรูปจากคลัง…</span></div>
   </div>
-  <div class="elec-empty"><div class="elec-empty-ic">⏳</div>
+  <div class="elec-empty"><div class="elec-empty-ic">${ico("clock")}</div>
     <div class="elec-empty-h">กำลังโหลดจากคลัง ${esc(ei?ei.label:"")}…</div>
     <div class="elec-empty-s">ดึงรายการไฟล์จาก Supabase Storage โดยตรง</div></div>`;
 }
@@ -218,13 +218,13 @@ function renderElecList(){
   let html=`<div class="elec-bar-top">
     <div class="elec-store">${ei?ei.emoji:""} คลัง <b>${esc(ei?ei.label:sec)}</b>
       <span class="elec-store-sub">${groups.length} กลุ่ม · ${totalImg} รูป · bucket <code>${esc(ei?ei.bucket:sec)}</code></span></div>
-    <button class="btn ghost" id="elecRefresh" title="อ่านรายการรูปล่าสุดจากคลังใหม่">🔄 รีเฟรชจากคลัง</button>
+    <button class="btn ghost" id="elecRefresh" title="อ่านรายการรูปล่าสุดจากคลังใหม่">${ico("refresh")} รีเฟรชจากคลัง</button>
   </div>`;
   if(!groups.length){
     html+=`<div class="elec-empty">
-      <div class="elec-empty-ic">🗂️</div>
+      <div class="elec-empty-ic">${ico("folder")}</div>
       <div class="elec-empty-h">ยังไม่มีกลุ่มรูปในคลังนี้</div>
-      <div class="elec-empty-s">กดปุ่ม “＋ นำเข้ารูปใหม่” มุมบนขวา เพื่อเลือกวันที่และเลือกโฟลเดอร์รูปทั้งหมด</div></div>`;
+      <div class="elec-empty-s">กดปุ่ม “นำเข้ารูปใหม่” มุมบนขวา เพื่อเลือกวันที่และเลือกโฟลเดอร์รูปทั้งหมด</div></div>`;
   }else{
     /* ===== แถบเลือกปี (ค.ศ. ใหม่→เก่า) — กลุ่มที่ไม่มีวันที่ รวมเข้ากับ "ปีล่าสุด" ===== */
     const now=new Date(), curYear=String(now.getFullYear());
@@ -255,20 +255,20 @@ function renderElecList(){
         const cover=cnt?bucketImgUrl(ei.bucket,o.id,o.images[0]):null;
         return `<div class="gcard" data-gid="${o.id}">
           <div class="gcover">${cover
-            ?`<img loading="lazy" src="${cover}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'gph',textContent:'🖼️'}))">`
-            :`<div class="gph">🗂️</div>`}
-            <span class="gcnt num">🖼️ ${cnt}</span></div>
+            ?`<img loading="lazy" src="${cover}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'gph',textContent:''}))">`
+            :`<div class="gph"></div>`}
+            <span class="gcnt num">${ico("images")} ${cnt}</span></div>
           <div class="gbody">
             <div class="gname num">${esc(label||"(ไม่มีวันที่)")}</div>
             <div class="gmeta">จำนวนรูป ${cnt}</div>
           </div>
-          <button class="gdel" data-del="${o.id}" title="ลบกลุ่ม (ใส่รหัส)">🗑</button>
+          <button class="gdel" data-del="${o.id}" title="ลบกลุ่ม (ใส่รหัส)">${ico("trash")}</button>
         </div>`;
       }).join("");
       return `<section class="emonth${k===openMonth?"":" collapsed"}" data-mk="${esc(k)}">
         <button class="emonth-head" type="button">
-          <span class="emonth-caret">▾</span>
-          <span class="emonth-name">📅 ${esc(monthLabel(k))}</span>
+          <span class="emonth-caret">${ico("chevron-down")}</span>
+          <span class="emonth-name">${ico("calendar")} ${esc(monthLabel(k))}</span>
           <span class="emonth-sub">${items.length} กลุ่ม · ${imgN} รูป</span>
         </button>
         <div class="egrid">${cards}</div>
@@ -293,18 +293,18 @@ function renderElecDetail(o){
   const q=elecSearch.trim().toLowerCase();
   const shown=q?all.filter(n=>n.toLowerCase().includes(q)):all;
   let html=`<div class="elec-detail-head">
-    <button class="btn ghost" id="elecBack">↩ กลับคลัง</button>
+    <button class="btn ghost" id="elecBack">${ico("arrow-left")} กลับคลัง</button>
     <div class="edh-title"><div class="edh-name num">${ei?ei.emoji+" ":""}${esc(label||"(ไม่มีวันที่)")}</div>
       <div class="edh-sub">${ei?ei.label:o.section} · ทั้งหมด ${all.length} รูป</div></div>
     <div class="edh-actions">
-      <button class="btn ghost" id="elecZip">📦 Export ZIP</button>
-      <button class="btn danger" id="elecDel">🗑 ลบกลุ่ม</button>
+      <button class="btn ghost" id="elecZip">${ico("archive")} Export ZIP</button>
+      <button class="btn danger" id="elecDel">${ico("trash")} ลบกลุ่ม</button>
     </div>
   </div>
-  <div class="search elec-search"><span class="ic">🔍</span>
+  <div class="search elec-search"><span class="ic">${ico("search")}</span>
     <input id="elecSearchInp" placeholder="ค้นหาชื่อรูปในกลุ่มนี้…" value="${esc(elecSearch)}"></div>`;
   if(!shown.length){
-    html+=`<div class="elec-empty"><div class="elec-empty-ic">${q?"🔍":"🖼️"}</div>
+    html+=`<div class="elec-empty"><div class="elec-empty-ic">${q?ico("search"):ico("images")}</div>
       <div class="elec-empty-h">${q?"ไม่พบรูปที่ตรงกับคำค้น":"กลุ่มนี้ยังไม่มีรูป"}</div>
       ${q?`<div class="elec-empty-s">ลองพิมพ์คำอื่น (พิมพ์บางส่วนของชื่อก็ได้)</div>`:""}</div>`;
   }else{
@@ -313,7 +313,7 @@ function renderElecDetail(o){
       const url=bucketImgUrl(ei.bucket,o.id,n);
       return `<figure class="icell">
         <img loading="lazy" src="${url}" alt="${esc(n)}" data-full="${url}"
-          onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'iph',textContent:'⚠️'}))">
+          onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'iph',textContent:''}))">
         <figcaption title="${esc(n)}">${esc(n)}</figcaption></figure>`;
     }).join("")+`</div>`;
   }
@@ -358,7 +358,7 @@ function closeElecLB(){ elecLB=null; $("lb").classList.remove("gallery"); const 
 function openElecModal(){
   const ei=elecInfo(currentSection);
   if(!ei){ toast("เปิดการนำเข้าได้เฉพาะในหัวข้อประกันอิเล็คทรอนิค"); return; }
-  $("elecTitle").textContent=`${ei.emoji} นำเข้ารูปเข้าคลัง ${ei.label}`;
+  $("elecTitle").textContent=`นำเข้ารูปเข้าคลัง ${ei.label}`;
   elecClearFiles();
   elecUploadGroupId=null;
   $("elecStep1").style.display="";
@@ -409,10 +409,10 @@ function handleElecFolder(fileList){
   const rel=files[0].webkitRelativePath||""; const folder=rel?rel.split("/")[0]:"(โฟลเดอร์)";
   const pk=$("elecPick");
   pk.style.display="";
-  pk.innerHTML=`<span class="ep-ic">📁</span><div class="ep-body">
+  pk.innerHTML=`<span class="ep-ic">${ico("folder")}</span><div class="ep-body">
     <div class="ep-name">${esc(folder)}</div>
     <div class="ep-sub">พบรูป <b class="num">${elecFiles.length}</b> รูป · จะสร้างกลุ่มชื่อ <b class="num">${esc(beDateLabel($("elecDate").value)||"—")}</b></div>
-  </div><button class="ep-clear" id="elecPickClear" type="button">✕</button>`;
+  </div><button class="ep-clear" id="elecPickClear" type="button">${ico("x")}</button>`;
   $("elecPickClear").onclick=()=>{ elecClearFiles(); pk.style.display="none"; $("elecThumbs").innerHTML=""; elecUpdateStartBtn(); };
   renderElecThumbs();
   elecUpdateStartBtn();
@@ -464,7 +464,7 @@ async function elecUploadPending(){
     $("elecFailN").textContent=fails.length;
     $("elecFailList").innerHTML=fails.map(f=>
       `<div class="ef-item"><img src="${f.thumb}" alt=""><div class="ef-info">
-        <div class="ef-nm">${esc(f.name)}</div><div class="ef-rs">❌ ${esc(f.reason)}</div></div></div>`
+        <div class="ef-nm">${esc(f.name)}</div><div class="ef-rs">${ico("x")} ${esc(f.reason)}</div></div></div>`
     ).join("");
     $("elecFail").style.display="";
     $("elecStep2Actions").style.display="";
@@ -506,7 +506,7 @@ async function deleteElecGroup(o){
   const label=beDateLabel(o.date), cnt=(o.images&&o.images.length)||0;
   const ok=await askPassword({title:"ลบกลุ่มรูป",
     message:`ลบกลุ่ม "${label||"—"}" (${cnt} รูป) ถาวร?\nใส่รหัสผ่านเพื่อยืนยัน`,
-    icon:"🗑",confirmText:"ลบกลุ่ม",danger:true,expect:DEL_GROUP_PASSWORD});
+    icon:"trash",confirmText:"ลบกลุ่ม",danger:true,expect:DEL_GROUP_PASSWORD});
   if(!ok) return;
   const paths=(o.images||[]).map(n=>o.id+"/"+n);
   if(ei) await Store.removeFromBucket(ei.bucket, paths);
@@ -525,7 +525,7 @@ async function exportGroupZip(o){
   const imgs=o.images||[];
   if(!imgs.length){ toast("กลุ่มนี้ไม่มีรูปให้ส่งออก"); return; }
   const ei=elecInfo(o.section), btn=$("elecZip");
-  elecZipBusy=true; if(btn){ btn.disabled=true; btn.textContent="📦 กำลังสร้าง ZIP…"; }
+  elecZipBusy=true; if(btn){ btn.disabled=true; btn.textContent="กำลังสร้าง ZIP…"; }
   try{
     const zip=new JSZip(); let ok=0, fail=0;
     for(const name of imgs){
@@ -534,14 +534,14 @@ async function exportGroupZip(o){
         if(!res.ok) throw new Error("HTTP "+res.status);
         zip.file(name, await res.blob()); ok++;
       }catch(e){ fail++; console.warn("zip fetch",name,e&&e.message||e); }
-      if(btn) btn.textContent=`📦 กำลังสร้าง ZIP… ${ok+fail}/${imgs.length}`;
+      if(btn) btn.textContent=`กำลังสร้าง ZIP… ${ok+fail}/${imgs.length}`;
     }
     if(!ok){ toast("ดึงรูปไม่สำเร็จ ส่งออกไม่ได้"); return; }
     const blob=await zip.generateAsync({type:"blob"});
     downloadBlob(blob,(beDateLabel(o.date)||"group")+`_${(ei?ei.label:o.section).replace(/\s+/g,"")}.zip`);
     toast(fail?`ส่งออก ${ok} รูป (พลาด ${fail})`:`ส่งออก ${ok} รูปเป็น ZIP แล้ว`);
   }finally{
-    elecZipBusy=false; if(btn){ btn.disabled=false; btn.textContent="📦 Export ZIP"; }
+    elecZipBusy=false; if(btn){ btn.disabled=false; btn.textContent="Export ZIP"; }
   }
 }
 function downloadBlob(blob,filename){

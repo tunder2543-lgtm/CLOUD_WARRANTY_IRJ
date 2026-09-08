@@ -124,7 +124,7 @@ function resolveCatId(name,secId,createdCats){
 /* ---------- ยืนยันนำเข้า ---------- */
 async function confirmImport(){
   if(!importRows.length){ toast("ไม่มีข้อมูลนำเข้า"); return; }
-  const btn=$("impConfirm"); btn.disabled=true; btn.textContent="⏳ กำลังนำเข้า…";
+  const btn=$("impConfirm"); btn.disabled=true; btn.textContent="กำลังนำเข้า…";
   const createdSecs={}, createdCats={};
   const orders=importRows.map(r=>{
     const secId=resolveSectionId(r.secName,createdSecs);
@@ -139,9 +139,9 @@ async function confirmImport(){
   await Store.saveOrdersBulk(orders);
   Log.add("import_json","นำเข้าจาก Excel/CSV",
     `สร้าง ${orders.length} ออเดอร์`+(nSec?` · หัวข้อใหม่ ${nSec}`:"")+(nCat?` · ประเภทใหม่ ${nCat}`:""));
-  btn.disabled=false; btn.textContent="✅ ยืนยันนำเข้า";
+  btn.disabled=false; btn.textContent="ยืนยันนำเข้า";
   closeImportModal(); renderAll();
-  toast(`นำเข้า ${orders.length} ออเดอร์แล้ว 🎉`);
+  toast(`นำเข้า ${orders.length} ออเดอร์แล้ว`);
 }
 
 /* ---------- เปิด/ปิด modal ---------- */

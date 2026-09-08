@@ -6,18 +6,18 @@
    ============================================================ */
 const LOG_MAX=500;   /* เพดานรายการที่เก็บในเครื่อง (ตัดตัวเก่าทิ้งอัตโนมัติ) */
 
-/* map action(โค้ดคงที่) -> ป้ายไทย + อีโมจิ + โทนสีของกล่องไอคอน
+/* map action(โค้ดคงที่) -> ป้ายไทย + ไอคอน + โทนสีของกล่องไอคอน
    tone: add=เขียว sage อ่อน · edit=ฟ้า k4 · del=แดงอ่อน */
 const LOG_LABELS={
-  create_order:{t:"สร้างออเดอร์",       ic:"🟢", tone:"add"},
-  edit_order:  {t:"แก้ไขออเดอร์",       ic:"✏️", tone:"edit"},
-  delete_order:{t:"ลบออเดอร์",          ic:"🗑️", tone:"del"},
-  add_category:{t:"เพิ่มประเภทงาน",      ic:"🏷️", tone:"add"},
-  del_category:{t:"ลบประเภทงาน",        ic:"❌", tone:"del"},
-  add_special: {t:"เพิ่มหมวดหมู่พิเศษ",   ic:"➕", tone:"add"},
-  del_special: {t:"ลบหมวดหมู่พิเศษ",     ic:"➖", tone:"del"},
-  reset:       {t:"ล้างข้อมูลทั้งหมด",    ic:"⚠️", tone:"del"},
-  import_json: {t:"นำเข้า JSON",         ic:"⬆️", tone:"edit"},
+  create_order:{t:"สร้างออเดอร์",       ic:ico("plus-circle"), tone:"add"},
+  edit_order:  {t:"แก้ไขออเดอร์",       ic:ico("edit"), tone:"edit"},
+  delete_order:{t:"ลบออเดอร์",          ic:ico("trash"), tone:"del"},
+  add_category:{t:"เพิ่มประเภทงาน",      ic:ico("tag"), tone:"add"},
+  del_category:{t:"ลบประเภทงาน",        ic:ico("minus-circle"), tone:"del"},
+  add_special: {t:"เพิ่มหมวดหมู่พิเศษ",   ic:ico("plus-circle"), tone:"add"},
+  del_special: {t:"ลบหมวดหมู่พิเศษ",     ic:ico("minus-circle"), tone:"del"},
+  reset:       {t:"ล้างข้อมูลทั้งหมด",    ic:ico("alert"), tone:"del"},
+  import_json: {t:"นำเข้า JSON",         ic:ico("upload"), tone:"edit"},
 };
 
 function logGenId(){ return "log_"+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36); }

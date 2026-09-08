@@ -10,12 +10,12 @@ const LOG_KEY=KEY+"_log";   /* คีย์ mirror ของ log (อยู่�
 
 /* ===== หัวข้อเมนูซ้าย (คงที่) ===== */
 const FIXED_GROUPS=[
-  {id:"g1",icon:"⚡",name:"ประกันอิเล็คทรอนิค",sections:[
+  {id:"g1",icon:ico("bolt"),name:"ประกันอิเล็คทรอนิค",sections:[
     {id:"live-fb",name:"Live FB"},
     {id:"live-tiktok",name:"Live TikTok"},
     {id:"live-sell",name:"Live Sell"},
   ]},
-  {id:"g2",icon:"💳",name:"ประกันบัตรแข็ง",sections:[
+  {id:"g2",icon:ico("card"),name:"ประกันบัตรแข็ง",sections:[
     {id:"card-gold",name:"บัตรแข็งทอง",desc:"รับซื้อคืน 70% · ระยะเวลา 5 ปี"},
     {id:"card-silver",name:"บัตรแข็งเงิน",desc:"รับซื้อคืน 50% · ระยะเวลา 5 ปี"},
     {id:"card-green",name:"บัตรแข็งเขียว",desc:"ประกันหยกแท้จากร้าน I Real Jade"},
@@ -28,19 +28,19 @@ const MAX_ORDER_IMGS=100;   /* แนบรูปต่อออเดอร์�
    หัวข้อทั้ง 3 นี้ใช้ "ระบบคลังกลุ่มรูป" (import batch) แทนระบบออเดอร์ปกติ
    ต้องสร้าง bucket ชื่อตรงนี้เองใน Supabase (Public) + policy ให้ anon อัปโหลด/ลบได้ */
 const ELEC_SECTIONS={
-  "live-fb":     {bucket:"live-fb",     label:"Live FB",     emoji:"📘"},
-  "live-tiktok": {bucket:"live-tiktok", label:"Live TikTok", emoji:"🎵"},
-  "live-sell":   {bucket:"live-sell",   label:"Live Sell",   emoji:"🛒"},
+  "live-fb":     {bucket:"live-fb",     label:"Live FB",     emoji:ico("bolt")},
+  "live-tiktok": {bucket:"live-tiktok", label:"Live TikTok", emoji:ico("bolt")},
+  "live-sell":   {bucket:"live-sell",   label:"Live Sell",   emoji:ico("bolt")},
 };
 const isElecSection=id=>!!ELEC_SECTIONS[id];
 const elecInfo=id=>ELEC_SECTIONS[id]||null;
 const DEL_GROUP_PASSWORD="5044";   /* รหัสยืนยันการลบกลุ่ม */
-const UNLOCK_PASSWORD="5044";      /* รหัสปลดล็อคออเดอร์ (read-only → แก้ไข) */
+const UNLOCK_PASSWORD="5044";      /* รหัสปลดล็อคออเดอร์ (read-only ไปเป็น แก้ไข) */
 
 /* ===== ประกันบัตรแข็ง: อัตรารับซื้อคืน + ระยะเวลา (ต่อหัวข้อ) ===== */
 const CARD_PLANS={
-  "card-gold":   {emoji:"🥇", label:"บัตรแข็งทอง", rate:0.70, color:"#e0b34e", tint:"#fbf3e0"},
-  "card-silver": {emoji:"🥈", label:"บัตรแข็งเงิน", rate:0.50, color:"#9aa7b0", tint:"#eef1f3"},
+  "card-gold":   {emoji:"", label:"บัตรแข็งทอง", rate:0.70, color:"#e0b34e", tint:"#fbf3e0"},
+  "card-silver": {emoji:"", label:"บัตรแข็งเงิน", rate:0.50, color:"#9aa7b0", tint:"#eef1f3"},
 };
 const DEFAULT_TERM_YEARS=5;   /* ระยะเวลารับซื้อคืนมาตรฐาน */
 const isCardSection=id=>!!CARD_PLANS[id];
@@ -48,10 +48,10 @@ const cardPlan=id=>CARD_PLANS[id]||null;
 
 /* ===== สถานะงาน ===== */
 const STATUSES=[
-  {id:"todo", label:"รอทำ",     c:"#b8beba"},
-  {id:"doing",label:"กำลังทำ",  c:"#e6b96f"},
-  {id:"done", label:"เสร็จแล้ว", c:"#7cb5a0"},
-  {id:"ship", label:"ส่งแล้ว",   c:"#8fb2ce"},
+  {id:"todo", label:"รอทำ",     c:"#8b95a1"},
+  {id:"doing",label:"กำลังทำ",  c:"#b7791f"},
+  {id:"done", label:"เสร็จแล้ว", c:"#2f7a5a"},
+  {id:"ship", label:"ส่งแล้ว",   c:"#3c6fa8"},
 ];
 const statusById=id=>STATUSES.find(s=>s.id===id);
 

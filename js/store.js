@@ -30,13 +30,13 @@ const Store={
           else logs=(lr.data||[]).map(r=>({id:r.id,ts:r.ts,action:r.action,entity:r.entity||null,detail:r.detail||null}));
         }catch(e){ console.warn("[Supabase] logs:",e&&e.message||e); }
         this._cache={categories:cats,orders,sections,logs};
-        this._persist(); this.status="🟢 เชื่อมต่อ Supabase แล้ว";
+        this._persist(); this.status="เชื่อมต่อ Supabase แล้ว";
         return this._cache;
       }catch(e){
         console.warn("[Supabase] เชื่อมต่อไม่ได้:",e&&e.message||e);
-        this.mode="local"; this.status="🟠 ออฟไลน์ — เก็บในเครื่อง ("+(e&&e.message?e.message:"ต่อไม่ได้")+")";
+        this.mode="local"; this.status="ออฟไลน์ — เก็บในเครื่อง ("+(e&&e.message?e.message:"ต่อไม่ได้")+")";
       }
-    }else{ this.mode="local"; this.status="🟠 ออฟไลน์ — เก็บในเครื่อง"; }
+    }else{ this.mode="local"; this.status="ออฟไลน์ — เก็บในเครื่อง"; }
     /* สำรอง: localStorage */
     try{ this._cache=JSON.parse(localStorage.getItem(KEY))||null; }catch(e){ this._cache=null; }
     if(!this._cache) this._cache={};
