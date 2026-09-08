@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- กันเบราว์เซอร์แคชตัวหน้าเว็บเอง (ไฟล์ css/js กันด้วย ?v=… อยู่แล้ว
+     แต่ index.html ไม่มีตัวกัน ทำให้เห็นหน้าเก่าค้างหลังอัปเดต) -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>ระบบจัดการออเดอร์ · งานแกะสลักเลเซอร์</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,9 +15,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<link rel="stylesheet" href="css/base.css?v=40">
-<link rel="stylesheet" href="css/layout.css?v=40">
-<link rel="stylesheet" href="css/components.css?v=40">
+<link rel="stylesheet" href="css/base.css?v=45">
+<link rel="stylesheet" href="css/layout.css?v=45">
+<link rel="stylesheet" href="css/components.css?v=45">
 </head>
 <body>
 <div class="shell">
@@ -240,21 +245,13 @@
       <div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55">สร้างออเดอร์ทีละหลายรายการจากไฟล์ · คอลัมน์: เลขออเดอร์ · ชื่อลูกค้า · วันที่ · ประเภทงาน · หัวข้อ · สถานะ · หมายเหตุ (รูปใส่เองในเว็บภายหลัง)</div>
     </div>
     <div class="dsec">
-      <div class="st">ข้อมูล</div>
-      <div class="dataline">
-        <button class="btn ghost" id="btnExport">⬇️ ส่งออก JSON</button>
-        <button class="btn ghost" id="btnImport">⬆️ นำเข้า JSON</button>
-        <button class="btn ghost" id="btnReset" style="color:#c9695b">🗑️ ล้างข้อมูล</button>
-      </div>
-      <input type="file" id="importFile" accept="application/json" hidden>
-    </div>
-    <div class="dsec">
       <div class="st">บำรุงรักษารูปภาพ</div>
-      <button class="addbtn" id="btnCompressImgs" style="width:100%">🗜️ บีบอัดรูปเก่าให้เล็กลง</button>
-      <div id="compressProg" style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55">ย่อรูปใน <code>warranty-images</code> ที่ใหญ่เกินไป (ด้านยาวสุด 1600px) ให้เปิดออเดอร์เร็วขึ้น · เขียนทับไฟล์เดิมถาวร · ทำครั้งเดียวพอ</div>
+      <button class="addbtn" id="btnCompressImgs" style="width:100%">🔒 บีบอัดรูปเก่าให้เล็กลง</button>
+      <div id="compressProg" style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55">ย่อรูปใน <code>warranty-images</code> ที่ใหญ่เกินไป (ด้านยาวสุด 1600px) ให้เปิดออเดอร์เร็วขึ้น · <b style="color:#c9695b">เขียนทับไฟล์เดิมถาวร กู้คืนไม่ได้</b> · ต้องใส่รหัสผ่าน · ใช้เมื่อพื้นที่ใกล้เต็มเท่านั้น</div>
     </div>
     <div class="dsec">
       <div class="st">ที่เก็บข้อมูล</div>
+      <button class="addbtn" id="btnStorage" style="width:100%;margin-bottom:10px">📊 ดูพื้นที่จัดเก็บ Supabase</button>
       <div class="store-note"><b id="storeStatus">กำลังเชื่อมต่อ…</b><br><br>
         ซิงก์ขึ้น Supabase ครบทุกส่วน: ออเดอร์ <code>Warranty_orders</code> · ประเภทงาน <code>Warranty_categories</code> · หมวดหมู่พิเศษ <code>Warranty_sections</code> · บันทึกกิจกรรม <code>Warranty_logs</code> · รูป bucket <code>warranty-images</code> — สำรองในเครื่องอัตโนมัติ</div>
     </div>
@@ -309,6 +306,35 @@
   </div>
 </div>
 
+<!-- โมดัลพื้นที่จัดเก็บ Supabase Storage -->
+<div class="ov" id="stoOv"></div>
+<div class="modal sto-modal" id="stoModal">
+  <div class="mhead sto-head">
+    <div>
+      <h2>📊 พื้นที่จัดเก็บ</h2>
+      <p class="sto-sub">รวมไฟล์ทุกคลังรูปบน Supabase Storage</p>
+    </div>
+    <button class="close" id="stoClose">✕</button>
+  </div>
+  <div class="form sto-scroll">
+    <div id="stoBody"></div>
+  </div>
+  <div class="sto-foot">
+    <div class="sto-quota">
+      <span class="sto-quota-l">โควตาแพ็กเกจ</span>
+      <div class="seg sto-seg" id="stoPlan"></div>
+      <span class="sto-custom" id="stoCustomWrap" style="display:none">
+        <input type="number" id="stoCustom" min="0.1" step="0.1" placeholder="0"><i>GB</i>
+      </span>
+    </div>
+    <div class="mactions sto-actions">
+      <span class="prog" id="stoMsg"></span>
+      <button class="btn ghost" id="stoRescan">🔄 สแกนใหม่</button>
+      <button class="btn primary" id="stoCloseBtn">ปิด</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <div class="lb" id="lb">
   <button class="lb-close" id="lbClose" type="button" title="ปิด (Esc)">✕</button>
@@ -319,16 +345,17 @@
 </div>
 
 <!-- สคริปต์ (เรียงลำดับสำคัญ: config → helpers → store → log → app → orders → settings → main) -->
-<script src="js/config.js?v=40"></script>
-<script src="js/helpers.js?v=40"></script>
-<script src="js/datepicker.js?v=40"></script>
-<script src="js/store.js?v=40"></script>
-<script src="js/log.js?v=40"></script>
-<script src="js/app.js?v=40"></script>
-<script src="js/orders.js?v=40"></script>
-<script src="js/elec.js?v=40"></script>
-<script src="js/settings.js?v=40"></script>
-<script src="js/import-excel.js?v=40"></script>
-<script src="js/main.js?v=40"></script>
+<script src="js/config.js?v=45"></script>
+<script src="js/helpers.js?v=45"></script>
+<script src="js/datepicker.js?v=45"></script>
+<script src="js/store.js?v=45"></script>
+<script src="js/log.js?v=45"></script>
+<script src="js/app.js?v=45"></script>
+<script src="js/orders.js?v=45"></script>
+<script src="js/elec.js?v=45"></script>
+<script src="js/settings.js?v=45"></script>
+<script src="js/storage.js?v=45"></script>
+<script src="js/import-excel.js?v=45"></script>
+<script src="js/main.js?v=45"></script>
 </body>
 </html>

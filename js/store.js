@@ -117,26 +117,6 @@ const Store={
     this._cache.logs=[]; this._persist();
   },
 
-  /* ---------- push ข้อมูลทั้งหมดขึ้น Supabase (ใช้ตอนนำเข้า JSON) ---------- */
-  async pushAll(){
-    if(this.mode!=="supabase"||!sb) return;
-    const c=this._cache;
-    try{
-      if(c.categories&&c.categories.length) await sb.from(T_CATS).upsert(c.categories.map(catToRow));
-      if(c.sections&&c.sections.length)   await sb.from(T_SECTIONS).upsert(c.sections.map(s=>({id:s.id,name:s.name,sort:s.sort||0})));
-      if(c.orders&&c.orders.length)       await sb.from(T_ORDERS).upsert(c.orders.map(orderToRow));
-      if(c.logs&&c.logs.length)           await sb.from(T_LOGS).upsert(c.logs.map(e=>({id:e.id,ts:e.ts,action:e.action,entity:e.entity||null,detail:e.detail||null})));
-    }catch(e){ console.warn("[Supabase] pushAll:",e&&e.message||e); toast("ซิงก์บางส่วนขึ้น Supabase ไม่สำเร็จ"); }
-  },
-
   /* ---------- อื่น ๆ ---------- */
   _persist(){ try{ localStorage.setItem(KEY,JSON.stringify(this._cache)); }catch(e){} },
-  export(){ return JSON.stringify(this._cache,null,2); },
-  replaceAll(o){ this._cache=o; this._persist(); },
-  async reset(){   /* ล้างเฉพาะออเดอร์ — คงประเภทงาน/หมวดพิเศษ/บันทึกไว้ */
-    const cats=this._cache.categories||[], secs=this._cache.sections||[], logs=this._cache.logs||[];
-    if(this.mode==="supabase"){ try{ await sb.from(T_ORDERS).delete().not("id","is",null); }catch(e){console.warn(e);} }
-    this._cache={categories:cats,orders:[],sections:secs,logs:logs};
-    this._persist();
-  },
 };

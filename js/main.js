@@ -54,9 +54,12 @@ function wire(){
   $("btnSettings").onclick=()=>dr.classList.add("show");
   $("dClose").onclick=()=>dr.classList.remove("show");
   $("addCat").onclick=addCat; $("newCat").addEventListener("keydown",e=>{if(e.key==="Enter")addCat();});
-  $("btnExport").onclick=exportJSON; $("btnImport").onclick=()=>$("importFile").click();
-  $("importFile").onchange=e=>{if(e.target.files[0])importJSON(e.target.files[0]);};
   $("btnCompressImgs").onclick=migrateCompressImages;
+  /* โมดัลพื้นที่จัดเก็บ */
+  $("btnStorage").onclick=openStorageModal;
+  $("stoClose").onclick=()=>showStoModal(false); $("stoCloseBtn").onclick=()=>showStoModal(false);
+  $("stoOv").onclick=()=>showStoModal(false);
+  $("stoRescan").onclick=stoScan;
   /* เมนู ล็อค/ปลดล็อคทั้งหมด */
   $("bulkLockBtn").onclick=e=>{ e.stopPropagation(); $("bulkLockMenu").classList.toggle("show"); };
   $("bulkLockAll").onclick=()=>{ $("bulkLockMenu").classList.remove("show"); bulkSetLock(true); };
@@ -89,7 +92,6 @@ function wire(){
   $("impTemplate").onclick=importTemplate;
   $("impBack").onclick=()=>{$("impStep1").style.display="";$("impStep2").style.display="none";};
   $("impConfirm").onclick=confirmImport;
-  $("btnReset").onclick=async()=>{if(await askConfirm({title:"ล้างออเดอร์ทั้งหมด?",message:"ลบออเดอร์ทั้งหมดออกจากระบบ (คงประเภทงาน · หมวดหมู่พิเศษ · บันทึกไว้)",icon:"🗑",confirmText:"ล้างข้อมูล",danger:true})){await Store.reset();DB=Store._cache;CATEGORIES=DB.categories||[];renderAll();Log.add("reset","ข้อมูลทั้งหมด","ล้างออเดอร์ทั้งหมดออกจากระบบ");toast("ล้างข้อมูลแล้ว");}};
   /* ลิ้นชักบันทึกกิจกรรม (Activity Log) */
   const lg=$("logDrawer");
   $("btnLog").onclick=()=>{renderLogs();lg.classList.add("show");};
@@ -112,7 +114,7 @@ function wire(){
     if(e.key==="ArrowLeft"){e.preventDefault();elecLBPrev();}
     else if(e.key==="ArrowRight"){e.preventDefault();elecLBNext();}
   });
-  document.addEventListener("keydown",e=>{if(e.key==="Escape"){showModal(false);closeLockView();closeImportModal();if(typeof showElecModal==="function"&&!(typeof elecBusy==="function"&&elecBusy()))showElecModal(false);dr.classList.remove("show");lg.classList.remove("show");$("lb").classList.remove("open");if(typeof closeElecLB==="function")closeElecLB();$("sidebar").classList.remove("show");$("sbOv").classList.remove("show");}});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"){showModal(false);closeLockView();closeImportModal();if(typeof showElecModal==="function"&&!(typeof elecBusy==="function"&&elecBusy()))showElecModal(false);if(typeof showStoModal==="function")showStoModal(false);dr.classList.remove("show");lg.classList.remove("show");$("lb").classList.remove("open");if(typeof closeElecLB==="function")closeElecLB();$("sidebar").classList.remove("show");$("sbOv").classList.remove("show");}});
 }
 
 /* ===== แสดงรายการบันทึกกิจกรรม (ใหม่→เก่า, เวลาอ่านง่ายภาษาไทย) ===== */

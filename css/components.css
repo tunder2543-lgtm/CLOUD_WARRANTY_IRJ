@@ -220,8 +220,6 @@
 .swatches button{width:26px;height:26px;border-radius:9px;border:2px solid transparent;transition:.15s}
 .swatches button.on{border-color:var(--ink);transform:scale(1.12)}
 .addbtn{background:var(--sage);color:#fff;border:none;border-radius:12px;padding:10px 16px;font-size:14px;font-weight:600}
-.dataline{display:flex;gap:9px;flex-wrap:wrap}
-.dataline .btn{flex:1;min-width:120px;text-align:center}
 .store-note{font-size:12.5px;color:var(--ink-soft);background:var(--k4-bg);border-radius:14px;padding:13px 15px;line-height:1.55}
 .store-note b{color:var(--ink)} .store-note code{background:rgba(0,0,0,.05);padding:1px 5px;border-radius:5px;font-size:11.5px}
 
@@ -377,3 +375,101 @@
   background:rgba(59,69,63,.82);color:#fff;font-size:14px;font-weight:600;padding:7px 18px;border-radius:20px}
 .lb.gallery .lb-count{display:block}
 @media(max-width:620px){.lb-nav{width:46px;height:46px;font-size:25px}.lb-nav.lb-prev{left:12px}.lb-nav.lb-next{right:12px}}
+
+
+/* ============================================================
+   พื้นที่จัดเก็บ (Supabase Storage) — โมดัล #stoModal
+   z-index ต้องสูงกว่า .drawer (56) ไม่งั้นลิ้นชักตั้งค่าจะบัง
+   ============================================================ */
+#stoOv{z-index:58}
+.sto-modal{z-index:59;width:min(600px,94vw);max-height:88vh;overflow:hidden;
+  display:flex;flex-direction:column}                       /* หัว+ท้ายตรึง เลื่อนเฉพาะเนื้อหา */
+.sto-modal .sto-scroll{flex:1;min-height:0;overflow:auto;padding:16px 26px 20px}
+.sto-head{flex:none;align-items:flex-start!important;padding-bottom:10px!important}
+.sto-sub{font-size:12.5px;color:var(--muted);font-weight:300;margin-top:2px}
+
+/* ---------- แผงสรุป ---------- */
+.sto-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:24px;
+  background:linear-gradient(135deg,#f4f8f5,var(--bg-2));border-radius:22px;padding:22px 26px;margin-bottom:20px}
+.sto-hero::after{content:"";position:absolute;right:-60px;top:-70px;width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(124,181,160,.16),transparent 68%);pointer-events:none}
+.sto-ring{position:relative;width:124px;height:124px;flex:none}
+.sto-ring svg{display:block;width:124px;height:124px}
+.sto-arc{animation:stoRing 1s cubic-bezier(.22,1,.36,1) both}
+@keyframes stoRing{from{stroke-dashoffset:var(--sto-c)}to{stroke-dashoffset:var(--sto-off)}}
+.sto-ring-mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
+.sto-ring-mid b{font-family:var(--round);font-size:25px;font-weight:700;line-height:1.05;letter-spacing:-.02em}
+.sto-ring-mid span{font-size:10.5px;color:var(--muted);letter-spacing:.04em}
+.sto-sum{flex:1;min-width:0;position:relative;z-index:1}
+.sto-used{font-family:var(--round);font-size:31px;font-weight:700;line-height:1.1;letter-spacing:-.02em;color:var(--ink)}
+.sto-of{font-size:12.5px;color:var(--muted);margin-top:3px}
+.sto-pill{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:6px 13px 6px 10px;
+  border-radius:20px;background:var(--surface);box-shadow:var(--shadow-sm);font-size:13px;color:var(--ink-soft)}
+.sto-pill i{width:8px;height:8px;border-radius:50%;flex:none}
+.sto-pill b{font-family:var(--round);font-weight:700}
+.sto-metaline{font-size:12px;color:var(--muted);margin-top:9px}
+
+/* ---------- แถบรวมแบบซ้อน (สัดส่วนแต่ละคลัง) ---------- */
+.sto-stack{display:flex;height:14px;border-radius:10px;overflow:hidden;background:var(--bg-2);gap:2px;margin-bottom:11px}
+.sto-seg-b{height:100%;min-width:3px;transform-origin:left;animation:stoGrow .7s cubic-bezier(.22,1,.36,1) both}
+.sto-seg-b:first-child{border-radius:10px 0 0 10px}
+.sto-seg-b:last-child{border-radius:0 10px 10px 0}
+@keyframes stoGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.sto-stack-cap{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-bottom:20px}
+
+/* ---------- รายการต่อคลัง ---------- */
+.sto-t{font-size:12px;font-weight:600;color:var(--sage);letter-spacing:.03em;text-transform:uppercase;margin-bottom:11px}
+.sto-rows{display:flex;flex-direction:column;gap:5px}
+.sto-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:16px;transition:background .18s}
+.sto-row:hover{background:var(--bg-2)}
+.sto-dot{width:11px;height:11px;border-radius:50%;flex:none;box-shadow:0 0 0 3px rgba(255,255,255,.7)}
+.sto-row-n{flex:1;min-width:0;font-size:14px;font-weight:500;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sto-row-n code{font-size:10.5px;color:var(--muted);background:var(--bg-2);padding:1px 6px;border-radius:6px;margin-left:6px}
+.sto-row:hover .sto-row-n code{background:var(--surface)}
+.sto-row-r{text-align:right;flex:none}
+.sto-row-v{font-family:var(--round);font-size:14px;font-weight:700;color:var(--ink);line-height:1.25}
+.sto-row-sub{font-size:11.5px;color:var(--muted)}
+.sto-row.bad .sto-row-v{color:#c9695b;font-size:12.5px;font-weight:500}
+.sto-row.bad .sto-row-n{color:var(--muted)}
+
+/* ---------- เตือน / สถานะ ---------- */
+.sto-warn{display:flex;gap:9px;background:#fbeee8;color:#c9695b;border-radius:14px;padding:11px 15px;
+  font-size:12.5px;font-weight:500;line-height:1.55;margin-bottom:18px}
+.sto-warn.soft{background:#fbf3e0;color:#9c7833}
+.sto-when{font-size:11.5px;color:var(--muted);margin-top:16px;text-align:center;line-height:1.6}
+.sto-empty{text-align:center;color:var(--muted);font-size:13.5px;padding:30px 0}
+
+/* โครงร่างระหว่างสแกนครั้งแรก */
+.sto-sk{border-radius:22px;background:linear-gradient(100deg,var(--bg-2) 30%,#f4f8f5 50%,var(--bg-2) 70%);
+  background-size:220% 100%;animation:stoShine 1.3s linear infinite}
+@keyframes stoShine{from{background-position:120% 0}to{background-position:-120% 0}}
+.sto-sk.hero{height:168px;margin-bottom:20px}
+.sto-sk.bar{height:14px;border-radius:10px;margin-bottom:26px}
+.sto-sk.row{height:44px;border-radius:16px;margin-bottom:5px}
+
+/* ---------- ตัวเลือกโควตา ---------- */
+.sto-foot{flex:none;border-top:1px solid var(--line);padding:16px 26px 20px;background:var(--surface)}
+.sto-quota{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.sto-quota-l{font-size:12px;font-weight:600;color:var(--sage);letter-spacing:.03em;text-transform:uppercase}
+.sto-seg{flex-wrap:wrap}
+.sto-seg button{padding:8px 15px;font-size:13px}
+.sto-custom{display:inline-flex;align-items:center;gap:6px}
+.sto-custom input{width:86px;border:1.5px solid var(--line);border-radius:14px;padding:8px 12px;
+  font-family:var(--round);font-weight:600;font-size:14px;outline:none;transition:border-color .2s}
+.sto-custom input:focus{border-color:var(--sage)}
+.sto-custom i{font-style:normal;font-size:12.5px;color:var(--muted)}
+.sto-actions{margin-top:14px}
+#stoMsg{flex:1;min-width:0;line-height:1.5}
+
+@media(max-width:560px){
+  .sto-modal{max-height:92vh}
+  .sto-modal .sto-scroll{padding:14px 18px 18px}
+  .sto-foot{padding:14px 18px 16px}
+  .sto-hero{flex-direction:column;align-items:flex-start;gap:16px;padding:18px}
+  .sto-ring,.sto-ring svg{width:104px;height:104px}
+  .sto-ring-mid b{font-size:21px}
+  .sto-used{font-size:26px}
+  .sto-actions{flex-wrap:wrap}
+  #stoMsg{flex-basis:100%;margin-bottom:6px}
+}

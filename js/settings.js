@@ -59,16 +59,16 @@ async function addCat(){
   inp.value="";renderAll();toast("เพิ่มประเภทงานแล้ว");
 }
 
-/* ---------- นำเข้า / ส่งออก ---------- */
-function exportJSON(){const b=new Blob([Store.export()],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="warranty-orders.json";a.click();URL.revokeObjectURL(a.href);toast("ส่งออกแล้ว");}
-function importJSON(file){const r=new FileReader();r.onload=async()=>{try{const o=JSON.parse(r.result);if(!o.orders)throw 0;Store.replaceAll(o);DB=Store._cache;DB.categories=DB.categories||[];DB.sections=DB.sections||[];DB.logs=DB.logs||[];CATEGORIES=DB.categories;await Store.pushAll();renderAll();Log.add("import_json","นำเข้าข้อมูล","นำเข้า "+(DB.orders||[]).length+" ออเดอร์ · "+(CATEGORIES||[]).length+" ประเภท");toast("นำเข้าแล้ว");}catch(e){toast("ไฟล์ไม่ถูกต้อง");}};r.readAsText(file);}
-
 /* ---------- บีบอัดรูปเก่าใน bucket warranty-images (เขียนทับไฟล์เดิม) ---------- */
 let compressBusy=false;
 async function migrateCompressImages(){
   if(compressBusy) return;
   if(Store.mode!=="supabase"||!sb){ toast("ต้องออนไลน์ (เชื่อม Supabase) ก่อน"); return; }
-  if(!(await askConfirm({title:"บีบอัดรูปเก่าให้เล็กลง?",message:"ย่อด้านยาวสุดเหลือ 1600px แล้วเขียนทับไฟล์เดิม (ถาวร กู้ความละเอียดเดิมไม่ได้)\nโหลดรูปทั้งหมดมาย่อ อาจใช้สักครู่ — อย่าปิดหน้านี้จนเสร็จ",icon:"🗜️",confirmText:"เริ่มบีบอัด",danger:true}))) return;
+  /* งานนี้เขียนทับต้นฉบับถาวร (รูปประกัน = หลักฐาน) — กั้นด้วยรหัสเหมือนงานอันตรายอื่น */
+  const ok=await askPassword({title:"บีบอัดรูปเก่าให้เล็กลง",
+    message:"ย่อด้านยาวสุดเหลือ 1600px แล้วเขียนทับไฟล์เดิม ถาวร — กู้ความละเอียดเดิมไม่ได้\nอย่าปิดหน้านี้จนกว่าจะเสร็จ\n\nใส่รหัสผ่านเพื่อยืนยัน",
+    icon:"🗜️",confirmText:"เริ่มบีบอัด",danger:true,expect:UNLOCK_PASSWORD});
+  if(!ok) return;
   const btn=$("btnCompressImgs"), prog=$("compressProg");
   const setP=t=>{ if(prog) prog.textContent=t; };
   compressBusy=true; if(btn) btn.disabled=true;
