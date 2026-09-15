@@ -8,3 +8,6 @@ Thumbs.db
 # bot working files (crops, plan, state, report)
 bot/work/
 bot/__pycache__/
+
+# Local Codex feature worktrees
+.worktrees/
