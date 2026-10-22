@@ -4,12 +4,14 @@
 
 /* ===== boot ===== */
 (async()=>{
-  DB=await Store.load();
+  try{
+  DB=await Store.load((p,t,c)=>{ if(typeof Boot!=="undefined") Boot.step(p,t,c); });
   CATEGORIES=DB.categories||[];
   $("storeStatus").textContent=Store.status||"";
   buildCatSwatches();
   wire();
   renderView();
+  }finally{ if(typeof Boot!=="undefined") Boot.done(); }   /* ปิดหน้าโหลดเสมอ แม้มีข้อผิดพลาด */
   if(typeof prefetchElecCounts==="function") prefetchElecCounts();   /* badge เมนูซ้าย = จำนวนกลุ่มใน bucket */
   setInterval(tickCountdowns,1000);   /* นับถอยหลังบัตรแข็งแบบสด ๆ */
 })();

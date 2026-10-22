@@ -16,12 +16,21 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<link rel="stylesheet" href="css/base.css?v=54">
-<link rel="stylesheet" href="css/layout.css?v=54">
-<link rel="stylesheet" href="css/components.css?v=54">
-<link rel="stylesheet" href="css/theme.css?v=54">
+<link rel="stylesheet" href="css/base.css?v=56">
+<link rel="stylesheet" href="css/layout.css?v=56">
+<link rel="stylesheet" href="css/components.css?v=56">
+<link rel="stylesheet" href="css/theme.css?v=56">
 </head>
 <body>
+<!-- หน้าโหลดตอนเปิดเว็บ — js/loader.js คุม % ตามขั้นตอนจริงของการโหลด -->
+<div id="bootLoader" class="boot" role="progressbar" aria-label="กำลังโหลดข้อมูล" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+  <div class="boot-card">
+    <div class="boot-brand"><span class="boot-logo">IRJ</span><span class="boot-name">I Real Jade<small>ระบบประกัน &amp; ออเดอร์</small></span></div>
+    <div class="boot-pct num"><span id="bootPct">0</span><i>%</i></div>
+    <div class="boot-track"><div class="boot-fill" id="bootFill"></div></div>
+    <div class="boot-label" id="bootLabel">กำลังเริ่มต้น…</div>
+  </div>
+</div>
 <!-- ชุดไอคอนเส้น (sprite) — ใช้ผ่าน <svg class="ico"><use href="#i-ชื่อ"></use></svg> หรือ ico("ชื่อ") ใน JS -->
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
   <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
@@ -413,19 +422,20 @@
 </div>
 
 <!-- สคริปต์ (เรียงลำดับสำคัญ: icons → config → helpers → store → log → app → orders → settings → main) -->
-<script src="js/icons.js?v=54"></script>
-<script src="js/config.js?v=54"></script>
-<script src="js/helpers.js?v=54"></script>
-<script src="js/datepicker.js?v=54"></script>
-<script src="js/store.js?v=54"></script>
-<script src="js/log.js?v=54"></script>
-<script src="js/app.js?v=54"></script>
-<script src="js/orders.js?v=54"></script>
-<script src="js/elec.js?v=54"></script>
-<script src="js/settings.js?v=54"></script>
-<script src="js/storage.js?v=54"></script>
-<script src="js/import-excel.js?v=54"></script>
-<script src="js/main.js?v=54"></script>
-<script src="js/theme.js?v=54"></script>
+<script src="js/loader.js?v=56"></script>
+<script src="js/icons.js?v=56"></script>
+<script src="js/config.js?v=56"></script>
+<script src="js/helpers.js?v=56"></script>
+<script src="js/datepicker.js?v=56"></script>
+<script src="js/store.js?v=56"></script>
+<script src="js/log.js?v=56"></script>
+<script src="js/app.js?v=56"></script>
+<script src="js/orders.js?v=56"></script>
+<script src="js/elec.js?v=56"></script>
+<script src="js/settings.js?v=56"></script>
+<script src="js/storage.js?v=56"></script>
+<script src="js/import-excel.js?v=56"></script>
+<script src="js/main.js?v=56"></script>
+<script src="js/theme.js?v=56"></script>
 </body>
 </html>

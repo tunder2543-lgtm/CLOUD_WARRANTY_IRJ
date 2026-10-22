@@ -5,10 +5,14 @@ let sb=null;
 
 const Store={
   mode:"local", status:"", _cache:null,
-  async load(){
+  /* onStep(p,label,creepTo) — ไม่บังคับ: รายงานความคืบหน้าให้หน้าโหลด (js/loader.js) */
+  async load(onStep){
+    const step=(p,t,c)=>{ try{ if(onStep) onStep(p,t,c); }catch(e){} };
     if(SUPABASE_URL&&SUPABASE_KEY&&window.supabase){
       try{
+        step(10,"กำลังเชื่อมต่อฐานข้อมูล…",14);
         sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+        step(14,"กำลังโหลดออเดอร์และประเภทงาน…",68);
         const [cr,or]=await Promise.all([
           sb.from(T_CATS).select("*").order("sort"),
           sb.from(T_ORDERS).select("*").order("updated_at",{ascending:false})
@@ -18,17 +22,20 @@ const Store={
         let cats=(cr.data||[]).map(rowToCat);
         let orders=(or.data||[]).map(rowToOrder);
         /* หมวดหมู่พิเศษ (ไม่ fatal ถ้าตารางยังไม่ถูกสร้าง) */
+        step(72,"กำลังโหลดหมวดหมู่พิเศษ…",80);
         let sections=[];
         try{ const sr=await sb.from(T_SECTIONS).select("*").order("sort");
           if(sr.error) console.warn("[Supabase] sections:",sr.error.message);
           else sections=(sr.data||[]).map(s=>({id:s.id,name:s.name,sort:s.sort||0}));
         }catch(e){ console.warn("[Supabase] sections:",e&&e.message||e); }
         /* บันทึกกิจกรรม (ไม่ fatal ถ้าตารางยังไม่ถูกสร้าง) — โหลดล่าสุด ~200 รายการ */
+        step(82,"กำลังโหลดบันทึกกิจกรรม…",90);
         let logs=[];
         try{ const lr=await sb.from(T_LOGS).select("*").order("ts",{ascending:false}).limit(200);
           if(lr.error) console.warn("[Supabase] logs:",lr.error.message);
           else logs=(lr.data||[]).map(r=>({id:r.id,ts:r.ts,action:r.action,entity:r.entity||null,detail:r.detail||null}));
         }catch(e){ console.warn("[Supabase] logs:",e&&e.message||e); }
+        step(92,"กำลังจัดหน้า…",97);
         this._cache={categories:cats,orders,sections,logs};
         this._persist(); this.status="เชื่อมต่อ Supabase แล้ว";
         return this._cache;
@@ -38,6 +45,7 @@ const Store={
       }
     }else{ this.mode="local"; this.status="ออฟไลน์ — เก็บในเครื่อง"; }
     /* สำรอง: localStorage */
+    step(80,"ออฟไลน์ — ใช้ข้อมูลที่เก็บในเครื่อง…",95);
     try{ this._cache=JSON.parse(localStorage.getItem(KEY))||null; }catch(e){ this._cache=null; }
     if(!this._cache) this._cache={};
     if(!this._cache.categories) this._cache.categories=[];
