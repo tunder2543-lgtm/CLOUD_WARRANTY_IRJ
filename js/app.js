@@ -9,6 +9,11 @@ let view="cat", fCat="all", fStat="all", fDate="all", search="";
 let currentSection=null;   /* null = หน้าแรก(ภาพรวม), "__none" = ยังไม่ระบุหัวข้อ */
 let cardView="all";        /* สรุปบัตรแข็งหน้าแรก: all | card-gold | card-silver */
 const collapsedGroups=new Set();   /* จำกลุ่มเมนูที่ถูกพับไว้ (ไม่ให้เด้งกางเองตอน re-render) */
+let galYear=null;                  /* ปี (ค.ศ.) ที่เลือกในมุมมองรายเดือนของคลังออเดอร์ */
+const monthOpen=new Set();         /* คีย์เดือนที่กางอยู่ (จำไว้ไม่ให้พับเองตอน re-render) */
+let monthInitKey=null;             /* หัวข้อ+ปี ที่ตั้งค่าเริ่มต้นของ monthOpen ไปแล้ว */
+const GALLERY_PAGE=20;             /* วาดการ์ดกี่ใบต่อกลุ่มก่อนกด "แสดงเพิ่ม" (หัวข้อใหญ่ ๆ เปิดเร็ว) */
+const galleryShown=new Map();      /* คีย์กลุ่ม → จำนวนการ์ดที่แสดงอยู่ (ล้างเมื่อเปลี่ยนหัวข้อ/ตัวกรอง) */
 
 const catById=id=>CATEGORIES.find(c=>c.id===id);
 const catName=id=>{const c=catById(id);return c?c.name:(id||"ไม่ระบุ");};
@@ -71,7 +76,7 @@ function renderNav(){
 }
 function gotoSection(id){
   currentSection=id;
-  fStat="all";fCat="all";fDate="all";search="";
+  fStat="all";fCat="all";fDate="all";search="";galleryShown.clear();
   if(typeof resetElecNav==="function") resetElecNav();
   const si=$("search"); if(si)si.value="";
   $("sidebar").classList.remove("show"); $("sbOv").classList.remove("show");
@@ -93,7 +98,7 @@ function renderView(){
   const g=home?null:groupOf(currentSection);
   $("pageEb").textContent=home?"ระบบจัดการออเดอร์ · งานแกะสลักเลเซอร์":(currentSection==="__none"?"ออเดอร์ที่ยังไม่จัดหัวข้อ":(g?g.name:"หมวดหมู่พิเศษ (รายงานคุณสายฟ้า)"));
   $("pageTitle").textContent=home?"ภาพรวมทุกหัวข้อ":(currentSection==="__none"?"ยังไม่ระบุหัวข้อ":(s?s.name:currentSection));
-  $("pageSub").textContent=home?"เลือกหัวข้อจากเมนูซ้าย หรือกดการ์ดด้านล่าง":(elec?"คลังรูป · กด “นำเข้ารูปใหม่” เพื่อเลือกวันที่และนำเข้ารูปทั้งโฟลเดอร์เข้าคลังนี้":(s&&s.desc?s.desc:"คลังออเดอร์ของหัวข้อนี้ · สร้างออเดอร์ใหม่จะเข้าหัวข้อนี้อัตโนมัติ"));
+  $("pageSub").textContent=home?"เลือกหัวข้อจากเมนูซ้าย หรือกดการ์ดด้านล่าง":(elec?"คลังรูป · กด “นำเข้ารูปใหม่” เลือกวันที่แล้วเลือกรูป หรือลากรูปวางบนกลุ่มเพื่อเพิ่มเข้ากลุ่มนั้น":(s&&s.desc?s.desc:"คลังออเดอร์ของหัวข้อนี้ · สร้างออเดอร์ใหม่จะเข้าหัวข้อนี้อัตโนมัติ"));
   renderCatManager();   /* หมวดในตั้งค่า อิงหัวข้อปัจจุบัน */
   if(home) renderHome();
   else if(elec) renderElecView();
@@ -136,7 +141,7 @@ function renderHome(){
   const cnt=st=>DB.orders.filter(o=>o.status===st).length;
   const doneship=DB.orders.filter(o=>o.status==="done"||o.status==="ship").length;
   let html=`<section class="stats">${[
-    ["ออเดอร์ทั้งหมด",T,"#1e3a5f"],["รอทำ",cnt("todo"),"#8b95a1"],
+    ["ออเดอร์ทั้งหมด",T,"#71717a"],["รอทำ",cnt("todo"),"#8b95a1"],
     ["กำลังทำ",cnt("doing"),"#b7791f"],["เสร็จ / ส่งแล้ว",doneship,"#2f7a5a"]
   ].map(c=>`<div class="stat" style="--sc:${c[2]}"><div class="l">${c[0]}</div><div class="v num" style="color:${c[2]}">${c[1]}</div><div class="sub">ทุกหัวข้อรวมกัน</div></div>`).join("")}</section>`;
   html+=cardSummaryHtml();
@@ -147,15 +152,15 @@ function renderHome(){
     if(!g.sections.length){ html+=`<div style="color:var(--muted);font-size:13px;margin-bottom:22px">ยังไม่มีหมวดหมู่ — เพิ่มได้ที่เมนูซ้าย (สูงสุด ${SPECIAL_MAX})</div>`; return; }
     html+=`<div class="scards">`+g.sections.map(s=>{
       const list=DB.orders.filter(o=>o.section===s.id);
-      if(isElecSection(s.id)){   /* คลังกลุ่มรูป: แสดงจำนวนกลุ่ม + จำนวนรูปรวม (จาก bucket ถ้ารู้แล้ว) */
+      if(isElecSection(s.id)){   /* คลังกลุ่มรูป: จำนวนกลุ่ม (= โฟลเดอร์ใน bucket) + รูปใหม่ที่ยังไม่ได้ดู */
         const ei=elecInfo(s.id);
         const st=(typeof elecStat==="function")?elecStat(s.id):null;
         const gCount=st?st.groups:list.length;
-        const imgs=st?st.images:list.reduce((n,o)=>n+((o.images&&o.images.length)||0),0);
+        const newN=(typeof elecNewCount==="function")?elecNewCount(s.id):0;
         return `<div class="scard" data-sec="${s.id}">
           <div class="sc-n">${ei?ei.emoji+" ":""}${esc(s.name)}</div>
           <div class="sc-v num">${gCount}<span>กลุ่ม</span></div>
-          <div class="sc-st"><span>${ico("images")} ${imgs} รูป</span></div></div>`;
+          <div class="sc-st"><span>${ico("images")} ${st?"คลังรูปแบ่งตามวัน":"กำลังนับ…"}</span>${newN?`<span class="sc-new">New +${newN}</span>`:""}</div></div>`;
       }
       const t=list.filter(o=>o.status==="todo").length,w=list.filter(o=>o.status==="doing").length,
             d=list.filter(o=>o.status==="done"||o.status==="ship").length;
@@ -255,7 +260,7 @@ function renderStats(){
   const sc=s=>list.filter(o=>o.status===s).length;
   const todo=sc("todo"),doing=sc("doing"),doneship=list.filter(o=>o.status==="done"||o.status==="ship").length;
   const cards=[
-    {k:"all",l:"ออเดอร์ทั้งหมด",v:T,sub:`${catsFor(currentSection).length} ประเภท`,c:"#1e3a5f"},
+    {k:"all",l:"ออเดอร์ทั้งหมด",v:T,sub:`${catsFor(currentSection).length} ประเภท`,c:"#71717a"},
     {k:"todo",l:"รอทำ",v:todo,sub:"คลิกเพื่อดู",c:"#8b95a1"},
     {k:"doing",l:"กำลังทำ",v:doing,sub:"คลิกเพื่อดู",c:"#b7791f"},
     {k:"doneship",l:"เสร็จ / ส่งแล้ว",v:doneship,sub:"คลิกเพื่อดู",c:"#2f7a5a"},
@@ -298,6 +303,8 @@ function renderGallery(){
   const items=visibleOrders();
   if(!items.length){ g.innerHTML=`<div style="text-align:center;color:var(--muted);padding:54px 20px">
     ${scoped().length?"ไม่พบออเดอร์ที่ตรงกับเงื่อนไข":"ยังไม่มีออเดอร์ในหัวข้อนี้ — กด “สร้างออเดอร์” เพื่อเริ่มต้น"}</div>`; return; }
+  /* มุมมองรายเดือน: แถบเลือกปี + โฟลเดอร์เดือนที่กดพับ/กางได้ (แบบเดียวกับคลังรูป) */
+  if(view==="month"){ renderGalleryByMonth(items); return; }
   /* มุมมองเรียงตามอายุรับซื้อคืน (ใกล้หมดก่อน ไปจนถึงเหลือมากสุด) — รายการเดียวไม่จัดกลุ่ม */
   if(view==="expire"){
     const sorted=[...items].sort((a,b)=>warrantyRemainMs(a)-warrantyRemainMs(b));
@@ -305,7 +312,7 @@ function renderGallery(){
     sec.innerHTML=`<div class="grphead"><span class="dot" style="--gc:var(--sage)"></span>
       <span class="t">${ico("clock")} อายุรับซื้อคืน — ใกล้หมดก่อน</span><span class="c num">${sorted.length}</span><span class="rule"></span></div>
       <div class="ocards"></div>`;
-    sorted.forEach(o=>sec.querySelector(".ocards").appendChild(orderCard(o)));
+    renderCardsPaged(sec.querySelector(".ocards"),sorted,"expire",true);
     g.appendChild(sec);
     return;
   }
@@ -317,14 +324,90 @@ function renderGallery(){
     if(!groups.has(gk))groups.set(gk,{name:gn,color:gc,items:[]});
     groups.get(gk).items.push(o);
   });
-  groups.forEach(grp=>{
+  groups.forEach((grp,gk)=>{
     const sec=document.createElement("div");sec.className="grp";
     sec.innerHTML=`<div class="grphead"><span class="dot" style="--gc:${grp.color}"></span>
       <span class="t">${esc(grp.name)}</span><span class="c num">${grp.items.length}</span><span class="rule"></span></div>
       <div class="ocards"></div>`;
-    const wrap=sec.querySelector(".ocards");
-    grp.items.forEach(o=>wrap.appendChild(orderCard(o)));
+    renderCardsPaged(sec.querySelector(".ocards"),grp.items,view+":"+gk);
     g.appendChild(sec);
+  });
+}
+/* ===== วาดการ์ดทีละหน้า (GALLERY_PAGE ใบ) — หัวข้อที่มีออเดอร์หลายร้อยรายการเปิดได้ทันที =====
+   • เรียงใหม่→เก่าตามวันที่ (ไม่มีวันที่ไว้ท้าย; วันเดียวกันคงลำดับเดิม = updated_at ล่าสุดก่อน)
+   • กด "แสดงเพิ่ม" เติมการ์ดต่อท้ายโดยไม่วาดทั้งหน้าใหม่ · keepOrder=true ใช้ลำดับที่ส่งมา */
+function renderCardsPaged(wrap,list,key,keepOrder){
+  const items=keepOrder?list:list.slice().sort((a,b)=>{ const da=a.date||"", db=b.date||""; if(da===db) return 0; if(!da) return 1; if(!db) return -1; return da<db?1:-1; });
+  const total=items.length;
+  let shown=galleryShown.get(key)||GALLERY_PAGE;
+  const draw=(from,to)=>{ for(let i=from;i<to&&i<total;i++) wrap.appendChild(orderCard(items[i])); };
+  draw(0,shown);
+  if(total<=shown) return;
+  const more=document.createElement("div"); more.className="more-row";
+  const update=()=>{
+    more.innerHTML=`<span class="more-info">แสดง <b class="num">${Math.min(shown,total)}</b> จาก <b class="num">${total}</b> รายการ</span>
+      <button class="btn ghost" type="button" data-more="page">${ico("chevron-down")} แสดงเพิ่มอีก ${Math.min(GALLERY_PAGE,total-shown)}</button>
+      <button class="btn ghost" type="button" data-more="all">แสดงทั้งหมด ${total}</button>`;
+    more.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      const next=b.dataset.more==="all"?total:Math.min(total,shown+GALLERY_PAGE);
+      draw(shown,next); shown=next; galleryShown.set(key,shown);
+      wrap.appendChild(more);                   /* ให้แถวปุ่มอยู่ท้ายสุดเสมอ */
+      if(shown>=total) more.remove(); else update();
+    });
+  };
+  update(); wrap.appendChild(more);
+}
+/* ===== มุมมองรายเดือน: แถบปี + โฟลเดอร์เดือนพับได้ =====
+   • ออเดอร์ที่ไม่มีวันที่ → รวมไว้ในปีล่าสุด และไปกองอยู่กลุ่ม "ไม่ระบุวันที่" ล่างสุด
+   • เดือนที่กางไว้ตอนแรก = เดือนปัจจุบัน (ถ้ามี) ไม่งั้นเดือนล่าสุดของปีที่เลือก */
+function renderGalleryByMonth(items){
+  const g=$("gallery");
+  const now=new Date(), curYear=String(now.getFullYear());
+  const realYears=items.map(o=>yearKey(o.date)).filter(y=>y!=="");
+  const latestYear=realYears.length?realYears.slice().sort().slice(-1)[0]:curYear;
+  const effYear=o=>{ const y=yearKey(o.date); return y!==""?y:latestYear; };
+  const years=[...new Set(items.map(effYear))].sort((a,b)=> a<b?1:-1);
+  if(!years.includes(galYear)) galYear = years.includes(curYear)?curYear:years[0];
+  const inYear=items.filter(o=>effYear(o)===galYear);
+  const byMonth=new Map();
+  inYear.forEach(o=>{ const k=monthKey(o.date); if(!byMonth.has(k)) byMonth.set(k,[]); byMonth.get(k).push(o); });
+  const keys=[...byMonth.keys()].sort((a,b)=>{ if(a==="")return 1; if(b==="")return -1; return a<b?1:-1; });
+  /* ตั้งค่าเดือนที่กางไว้ใหม่เมื่อเปลี่ยนหัวข้อหรือเปลี่ยนปี */
+  const initKey=(currentSection||"")+"|"+galYear;
+  if(monthInitKey!==initKey){
+    monthInitKey=initKey; monthOpen.clear();
+    const curMonth=curYear+"-"+String(now.getMonth()+1).padStart(2,"0");
+    const first=keys.includes(curMonth)?curMonth:keys[0];
+    if(first!==undefined) monthOpen.add(first);
+  }
+  let html=`<div class="eyear-bar">`+years.map(y=>{
+    const cnt=items.filter(o=>effYear(o)===y).length;
+    return `<button class="eyear-chip${y===galYear?" on":""}" data-year="${esc(y)}">${esc(String(Number(y)+543))}<span class="eyc-n num">${cnt}</span></button>`;
+  }).join("")+`</div>`;
+  html+=keys.map(k=>`<section class="emonth${monthOpen.has(k)?"":" collapsed"}" data-mk="${esc(k)}">
+      <button class="emonth-head" type="button">
+        <span class="emonth-caret">${ico("chevron-down")}</span>
+        <span class="emonth-name">${ico("calendar")} ${esc(monthLabel(k))}</span>
+        <span class="emonth-sub"><span class="num">${byMonth.get(k).length}</span> ออเดอร์</span>
+      </button>
+      <div class="ocards"></div>
+    </section>`).join("");
+  g.innerHTML=html;
+  /* วาดการ์ดเฉพาะเดือนที่กางอยู่ — เดือนที่พับไว้ค่อยวาดตอนกด (หัวข้อที่มีออเดอร์เยอะจะเปิดเร็วขึ้นมาก) */
+  const fillMonth=sec=>{
+    if(sec.dataset.filled) return;
+    renderCardsPaged(sec.querySelector(".ocards"),byMonth.get(sec.dataset.mk)||[],"month:"+sec.dataset.mk);
+    sec.dataset.filled="1";
+  };
+  g.querySelectorAll(".emonth").forEach(sec=>{ if(!sec.classList.contains("collapsed")) fillMonth(sec); });
+  g.querySelectorAll(".eyear-chip").forEach(c=>c.onclick=()=>{
+    galYear=c.dataset.year; renderGallery(); $("gallery").scrollIntoView({behavior:"smooth",block:"start"});
+  });
+  g.querySelectorAll(".emonth-head").forEach(h=>h.onclick=()=>{
+    const sec=h.closest(".emonth"), k=sec.dataset.mk;
+    sec.classList.toggle("collapsed");
+    if(sec.classList.contains("collapsed")) monthOpen.delete(k);
+    else { monthOpen.add(k); fillMonth(sec); }
   });
 }
 /* บล็อกข้อมูลบัตรแข็งในการ์ดออเดอร์ (ราคา + รับซื้อคืน + นับถอยหลัง) */

@@ -29,16 +29,31 @@ function tickCountdowns(){
 /* ===== wiring ===== */
 function wire(){
   $("btnNew").onclick=()=>{ if(isElecSection(currentSection)) openElecModal(); else openOrder(null); };
+  $("btnScanner").onclick=async()=>{
+    const scannerUrl="http://127.0.0.1:8765/";
+    try{
+      await fetch(`${scannerUrl}api/status`,{mode:"no-cors",cache:"no-store"});
+      window.location.href=scannerUrl;
+    }catch(_err){
+      await askAlert({
+        title:"ยังไม่ได้เปิดระบบสแกน",
+        message:"กรุณาเปิดไฟล์ bot\\start_web.bat แล้วกดปุ่ม สแกนโฟลเดอร์ อีกครั้ง",
+        icon:"info"
+      });
+    }
+  };
   $("btnMenu").onclick=()=>{$("sidebar").classList.add("show");$("sbOv").classList.add("show");};
   $("sbClose").onclick=()=>{$("sidebar").classList.remove("show");$("sbOv").classList.remove("show");};
   $("sbOv").onclick=()=>{$("sidebar").classList.remove("show");$("sbOv").classList.remove("show");};
-  $("search").oninput=e=>{search=e.target.value;renderGallery();};
-  $("fCat").onchange=e=>{fCat=e.target.value;renderGallery();};
-  $("fDate").onchange=e=>{fDate=e.target.value;renderGallery();};
+  /* เปลี่ยนตัวกรอง/คำค้น → เริ่มนับหน้า (20 ใบแรก) ใหม่ · ค้นหาหน่วง 150ms กันวาดซ้ำทุกตัวอักษร */
+  const refilter=()=>{ galleryShown.clear(); renderGallery(); };
+  $("search").oninput=debounce(e=>{search=e.target.value;refilter();},150);
+  $("fCat").onchange=e=>{fCat=e.target.value;refilter();};
+  $("fDate").onchange=e=>{fDate=e.target.value;refilter();};
   $("stats").onclick=e=>{const c=e.target.closest(".stat.clk");if(!c)return;fStat=c.dataset.stat;
     document.querySelectorAll("#stats .stat").forEach(s=>s.classList.toggle("on",s.dataset.stat===fStat));
-    renderGallery();$("gallery").scrollIntoView({behavior:"smooth",block:"start"});};
-  document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{view=b.dataset.v;document.querySelectorAll(".seg button").forEach(x=>x.classList.remove("on"));b.classList.add("on");renderGallery();});
+    refilter();$("gallery").scrollIntoView({behavior:"smooth",block:"start"});};
+  document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{view=b.dataset.v;document.querySelectorAll(".seg button").forEach(x=>x.classList.remove("on"));b.classList.add("on");refilter();});
   /* โมดัลออเดอร์ */
   $("mSave").onclick=saveOrder; $("mDelete").onclick=deleteOrder;
   $("mCancel").onclick=()=>showModal(false); $("mClose").onclick=()=>showModal(false); $("ov").onclick=()=>{};   /* กดพื้นหลังไม่ปิด — ต้องกดปุ่มปิด หรือ ยกเลิก */
@@ -78,12 +93,17 @@ function wire(){
   $("elecClose").onclick=()=>{ if(elecBusy()){ toast("กำลังอัปโหลด… รอให้เสร็จ หรือกด “ยกเลิก & ลบที่อัปแล้ว”"); return; } showElecModal(false); };
   $("elecOv").onclick=()=>{};   /* กดพื้นหลังไม่ปิด — ต้องกดปุ่มปิด (ระหว่างอัปโหลดปุ่มปิดก็ถูกล็อกไว้) */
   $("elecCancel1").onclick=()=>showElecModal(false);
-  $("elecDrop").onclick=()=>$("elecFolder").click();
-  $("elecFolder").onchange=e=>{ if(e.target.files&&e.target.files.length){ handleElecFolder(e.target.files); e.target.value=""; } };
-  $("elecDate").onchange=()=>{ elecUpdateStartBtn(); if($("elecPick").style.display!=="none"&&elecFiles.length){ const p=$("elecPick").querySelector(".ep-sub b:last-of-type"); if(p)p.textContent=beDateLabel($("elecDate").value)||"—"; } };
+  $("elecDrop").onclick=e=>{ if(e.target.closest("#elecPickDir")) return; $("elecFolder").click(); };
+  $("elecPickDir").onclick=e=>{ e.stopPropagation(); $("elecFolderDir").click(); };
+  $("elecFolder").onchange=e=>{ if(e.target.files&&e.target.files.length){ handleElecFiles(e.target.files); e.target.value=""; } };
+  $("elecFolderDir").onchange=e=>{ if(e.target.files&&e.target.files.length){ handleElecFiles(e.target.files); e.target.value=""; } };
+  $("elecDate").onchange=()=>{ elecUpdateStartBtn(); elecUpdateTargetHint(); };
   $("elecStart").onclick=elecStartUpload;
   $("elecRetry").onclick=elecRetryFailed;
   $("elecAbort").onclick=elecAbort;
+  /* เพิ่มรูปเข้ากลุ่มเดิม (ปุ่มในหน้ากลุ่ม) + ลากวางบนการ์ดกลุ่ม/ในหน้ากลุ่ม */
+  $("elecAddFiles").onchange=e=>{ if(e.target.files&&e.target.files.length&&elecGroupId){ elecAddFilesToGroup(elecGroupById(elecGroupId),e.target.files); } e.target.value=""; };
+  elecWireDragDrop();
   /* นำเข้า Excel/CSV */
   $("btnImportExcel").onclick=openImportModal;
   $("impClose").onclick=closeImportModal; $("impOv").onclick=()=>{};   /* กดพื้นหลังไม่ปิด — ต้องกดปุ่มปิด */
@@ -114,7 +134,7 @@ function wire(){
     if(e.key==="ArrowLeft"){e.preventDefault();elecLBPrev();}
     else if(e.key==="ArrowRight"){e.preventDefault();elecLBNext();}
   });
-  document.addEventListener("keydown",e=>{if(e.key==="Escape"){showModal(false);closeLockView();closeImportModal();if(typeof showElecModal==="function"&&!(typeof elecBusy==="function"&&elecBusy()))showElecModal(false);if(typeof showStoModal==="function")showStoModal(false);dr.classList.remove("show");lg.classList.remove("show");$("lb").classList.remove("open");if(typeof closeElecLB==="function")closeElecLB();$("sidebar").classList.remove("show");$("sbOv").classList.remove("show");}});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(typeof elecProgressActive==="function"&&elecProgressActive())return;showModal(false);closeLockView();closeImportModal();if(typeof showElecModal==="function"&&!(typeof elecBusy==="function"&&elecBusy()))showElecModal(false);if(typeof showStoModal==="function")showStoModal(false);dr.classList.remove("show");lg.classList.remove("show");$("lb").classList.remove("open");if(typeof closeElecLB==="function")closeElecLB();$("sidebar").classList.remove("show");$("sbOv").classList.remove("show");}});
 }
 
 /* ===== แสดงรายการบันทึกกิจกรรม (ใหม่ไปเก่า, เวลาอ่านง่ายภาษาไทย) ===== */

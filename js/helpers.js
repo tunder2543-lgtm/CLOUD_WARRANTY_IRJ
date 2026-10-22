@@ -42,6 +42,9 @@ function sanitizeImgName(name,i){
   return n;
 }
 
+/* หน่วงการเรียก fn จนกว่าจะหยุดเรียกติดกันนาน ms (ใช้กับช่องค้นหา) */
+function debounce(fn,ms){ let t; return function(...a){ clearTimeout(t); t=setTimeout(()=>fn.apply(this,a),ms); }; }
+
 let toastT;
 function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2100);}
 function countUp(el,to,dur=1200){const s=performance.now();(function step(t){let p=Math.min((t-s)/dur,1);p=1-Math.pow(1-p,3);el.textContent=Math.round(to*p);if(p<1)requestAnimationFrame(step);})(s);}

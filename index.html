@@ -11,13 +11,15 @@
 <title>ระบบจัดการออเดอร์ · งานแกะสลักเลเซอร์</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>try{if(localStorage.getItem("laser_dash_v3_theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<link rel="stylesheet" href="css/base.css?v=49">
-<link rel="stylesheet" href="css/layout.css?v=49">
-<link rel="stylesheet" href="css/components.css?v=49">
+<link rel="stylesheet" href="css/base.css?v=54">
+<link rel="stylesheet" href="css/layout.css?v=54">
+<link rel="stylesheet" href="css/components.css?v=54">
+<link rel="stylesheet" href="css/theme.css?v=54">
 </head>
 <body>
 <!-- ชุดไอคอนเส้น (sprite) — ใช้ผ่าน <svg class="ico"><use href="#i-ชื่อ"></use></svg> หรือ ico("ชื่อ") ใน JS -->
@@ -64,6 +66,8 @@
   <symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></symbol>
   <symbol id="i-minus-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></symbol>
   <symbol id="i-plus-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></symbol>
   <symbol id="i-dot" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="3"/></symbol>
 </svg>
 
@@ -88,8 +92,10 @@
     <div class="hbtns">
       <button class="iconbtn" id="btnMenu" style="display:none"><svg class="ico"><use href="#i-menu"></use></svg> เมนู</button>
       <button class="iconbtn primary" id="btnNew"><svg class="ico"><use href="#i-plus"></use></svg> สร้างออเดอร์</button>
+      <button class="iconbtn" id="btnScanner"><svg class="ico"><use href="#i-folder"></use></svg> สแกนโฟลเดอร์</button>
       <button class="iconbtn" id="btnLog"><svg class="ico"><use href="#i-list"></use></svg> บันทึก</button>
       <button class="iconbtn" id="btnSettings"><svg class="ico"><use href="#i-settings"></use></svg> ตั้งค่า</button>
+      <button class="iconbtn icon-only" id="btnTheme" type="button" title="เปลี่ยนเป็นธีมมืด" aria-label="สลับธีมสว่าง/มืด"><svg class="ico ico-moon"><use href="#i-moon"></use></svg><svg class="ico ico-sun"><use href="#i-sun"></use></svg></button>
     </div>
   </header>
 
@@ -120,7 +126,7 @@
     <div class="search"><span class="ic"><svg class="ico"><use href="#i-search"></use></svg></span><input id="search" placeholder="ค้นหา เลขออเดอร์ / ชื่อลูกค้า / เลขบัตร / สินค้า"></div>
     <div class="selwrap"><select id="fCat"></select></div>
     <div class="selwrap"><select id="fDate"></select></div>
-    <div class="seg"><button data-v="cat" class="on">ตามประเภท</button><button data-v="status">ตามสถานะ</button><button data-v="expire" id="segExpire" style="display:none"><svg class="ico"><use href="#i-clock"></use></svg> ใกล้หมดประกัน</button></div>
+    <div class="seg"><button data-v="cat" class="on">ตามประเภท</button><button data-v="status">ตามสถานะ</button><button data-v="month">ตามเดือน</button><button data-v="expire" id="segExpire" style="display:none"><svg class="ico"><use href="#i-clock"></use></svg> ใกล้หมดประกัน</button></div>
     <div class="bulklock" id="bulkLockWrap">
       <button class="btn ghost" id="bulkLockBtn" type="button"><svg class="ico"><use href="#i-lock"></use></svg> ล็อก/ปลดล็อก <svg class="ico"><use href="#i-chevron-down"></use></svg></button>
       <div class="bulklock-menu" id="bulkLockMenu">
@@ -240,15 +246,17 @@
   <div class="form">
     <!-- ขั้นตอน 1: เลือกวันที่ + โฟลเดอร์ -->
     <div id="elecStep1">
-      <div class="fld"><label>เลือกวันที่ (จะกลายเป็นชื่อกลุ่มอัตโนมัติ)</label><input type="date" id="elecDate"></div>
+      <div class="fld"><label>เลือกวันที่ (จะกลายเป็นชื่อกลุ่มอัตโนมัติ)</label><input type="date" id="elecDate">
+        <div class="elec-target" id="elecTarget"></div></div>
       <div class="fld">
-        <label>เลือกโฟลเดอร์ที่มีรูป</label>
+        <label>เลือกรูป</label>
         <div class="elec-drop" id="elecDrop">
-          <div class="elec-drop-ic"><svg class="ico"><use href="#i-folder"></use></svg></div>
-          <div class="elec-drop-t">กดเพื่อเลือกทั้งโฟลเดอร์</div>
-          <div class="elec-drop-s">ระบบจะอ่านเฉพาะไฟล์รูปในโฟลเดอร์นั้น</div>
+          <div class="elec-drop-ic"><svg class="ico"><use href="#i-images"></use></svg></div>
+          <div class="elec-drop-t">กดเพื่อเลือกรูป (เลือกได้หลายรูป)</div>
+          <div class="elec-drop-s">หรือลากรูปมาวางที่กล่องนี้ · <button type="button" class="linkbtn" id="elecPickDir">เลือกทั้งโฟลเดอร์แทน</button></div>
         </div>
-        <input type="file" id="elecFolder" webkitdirectory directory multiple accept="image/*" hidden>
+        <input type="file" id="elecFolder" multiple accept="image/*" hidden>
+        <input type="file" id="elecFolderDir" webkitdirectory directory multiple hidden>
       </div>
       <div id="elecPick" class="elec-pick" style="display:none"></div>
       <div class="elec-thumbs" id="elecThumbs"></div>
@@ -274,6 +282,19 @@
     </div>
   </div>
 </div>
+
+<!-- หน้าต่างความคืบหน้า (โหลดเดือนในคลัง / เพิ่มรูปเข้ากลุ่ม) — ปิดเองเมื่อเสร็จ -->
+<div class="ov" id="elecLoadOv"></div>
+<div class="modal load-modal" id="elecLoadModal" role="dialog" aria-live="polite">
+  <div class="load-body">
+    <div class="load-ic"><svg class="ico"><use href="#i-refresh"></use></svg></div>
+    <div class="load-title" id="elecLoadTitle">กำลังโหลด…</div>
+    <div class="load-sub" id="elecLoadSub"></div>
+    <div class="elec-bar"><div class="elec-bar-fill" id="elecLoadFill"></div></div>
+    <div class="elec-bar-meta"><span id="elecLoadPct" class="num">0%</span><span id="elecLoadCnt" class="num"></span></div>
+  </div>
+</div>
+<input type="file" id="elecAddFiles" multiple accept="image/*" hidden>
 
 <!-- ลิ้นชักตั้งค่า -->
 <div class="drawer" id="drawer">
@@ -392,18 +413,19 @@
 </div>
 
 <!-- สคริปต์ (เรียงลำดับสำคัญ: icons → config → helpers → store → log → app → orders → settings → main) -->
-<script src="js/icons.js?v=49"></script>
-<script src="js/config.js?v=49"></script>
-<script src="js/helpers.js?v=49"></script>
-<script src="js/datepicker.js?v=49"></script>
-<script src="js/store.js?v=49"></script>
-<script src="js/log.js?v=49"></script>
-<script src="js/app.js?v=49"></script>
-<script src="js/orders.js?v=49"></script>
-<script src="js/elec.js?v=49"></script>
-<script src="js/settings.js?v=49"></script>
-<script src="js/storage.js?v=49"></script>
-<script src="js/import-excel.js?v=49"></script>
-<script src="js/main.js?v=49"></script>
+<script src="js/icons.js?v=54"></script>
+<script src="js/config.js?v=54"></script>
+<script src="js/helpers.js?v=54"></script>
+<script src="js/datepicker.js?v=54"></script>
+<script src="js/store.js?v=54"></script>
+<script src="js/log.js?v=54"></script>
+<script src="js/app.js?v=54"></script>
+<script src="js/orders.js?v=54"></script>
+<script src="js/elec.js?v=54"></script>
+<script src="js/settings.js?v=54"></script>
+<script src="js/storage.js?v=54"></script>
+<script src="js/import-excel.js?v=54"></script>
+<script src="js/main.js?v=54"></script>
+<script src="js/theme.js?v=54"></script>
 </body>
 </html>
