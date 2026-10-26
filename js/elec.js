@@ -96,9 +96,14 @@ function elecGroups(secId){
   const c=ei?elecGroupsCache[ei.bucket]:undefined;
   return ((c!==undefined)?c:elecGroupsFromDB(secId)).filter(g=>!g._empty);
 }
-function elecGroupById(id){
-  for(const b in elecGroupsCache){ const g=(elecGroupsCache[b]||[]).find(x=>x.id===id); if(g) return g; }
-  return DB.orders.find(o=>o.id===id&&isElecSection(o.section))||null;
+/* หา group ตาม id "ภายในหัวข้อเดียว" (ค่าเริ่มต้น = หัวข้อที่เปิดอยู่)
+   ห้ามค้นข้ามคลัง: โฟลเดอร์ชื่อวันที่เดียวกัน (2026-10-15) มีได้ทั้ง live-fb และ live-tiktok
+   ถ้าค้นทุกคลัง การ์ดของ TikTok จะเปิด/ลบ/เพิ่มรูป ลงกลุ่มของ FB แทน */
+function elecGroupById(id,secId){
+  secId=secId||currentSection;
+  const ei=elecInfo(secId);
+  if(ei){ const g=(elecGroupsCache[ei.bucket]||[]).find(x=>x.id===id); if(g) return g; }
+  return DB.orders.find(o=>o.id===id&&o.section===secId)||null;
 }
 /* คำนวณสถิติ + ตัวนับไฟล์ต่อโฟลเดอร์ใหม่จาก cache */
 function elecRecalc(bucket){
